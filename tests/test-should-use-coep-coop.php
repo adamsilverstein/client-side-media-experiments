@@ -5,16 +5,17 @@
  * @package ClientSideMediaExperiments
  */
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class Test_Should_Use_Coep_Coop extends WP_UnitTestCase {
 
 	/**
 	 * Tear down after each test.
 	 */
 	public function tear_down() {
-		// Remove any filter overrides.
 		remove_all_filters( 'csme_use_coep_coop' );
-
-		// Remove dynamically created functions by resetting the test state.
 		parent::tear_down();
 	}
 
@@ -31,7 +32,7 @@ class Test_Should_Use_Coep_Coop extends WP_UnitTestCase {
 	 * Returns false when Chrome version is 137+.
 	 */
 	public function test_returns_false_when_chrome_137_or_higher() {
-		// Create a stub that returns 137.
+		// Create a stub that returns 140 (>= 137, so DIP is used).
 		if ( ! function_exists( 'wp_get_chrome_major_version' ) ) {
 			function wp_get_chrome_major_version() {
 				return 140;

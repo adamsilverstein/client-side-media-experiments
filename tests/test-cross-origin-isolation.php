@@ -13,6 +13,7 @@ class Test_Cross_Origin_Isolation extends WP_UnitTestCase {
 	public function tear_down() {
 		remove_all_filters( 'csme_use_coep_coop' );
 		unset( $_GET['action'] );
+		$GLOBALS['current_screen'] = null;
 		parent::tear_down();
 	}
 

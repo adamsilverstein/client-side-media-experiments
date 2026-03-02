@@ -20,6 +20,13 @@ jobs:
           php-version: '8.2'
           tools: composer
 
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-lint-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-lint-
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
@@ -60,6 +67,13 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: mysqli
           tools: composer
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-test-php${{ matrix.php }}-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-test-php${{ matrix.php }}-
 
       - name: Install dependencies
         run: composer update --no-interaction --prefer-dist
