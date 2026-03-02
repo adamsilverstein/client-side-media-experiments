@@ -27,11 +27,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: ${{ runner.os }}-composer-lint-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-lint-${{ hashFiles('**/composer.json') }}
           restore-keys: ${{ runner.os }}-composer-lint-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer update --no-interaction --prefer-dist
 
       - name: Run PHPCS
         run: composer lint
