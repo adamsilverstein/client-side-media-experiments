@@ -78,12 +78,15 @@ jobs:
           key: ${{ runner.os }}-composer-test-php${{ matrix.php }}-${{ hashFiles('**/composer.json') }}
           restore-keys: ${{ runner.os }}-composer-test-php${{ matrix.php }}-
 
+      # Uses composer update (not install) so dependencies resolve correctly
+      # for each PHP version in the matrix (e.g. PHPUnit 9 on PHP 7.4, 11 on 8.2).
       - name: Install dependencies
         run: composer update --no-interaction --prefer-dist
 
       - name: Set up WordPress test suite
         run: |
-          bash <(curl -s https://raw.githubusercontent.com/wp-cli/scaffold-command/main/templates/install-wp-tests.sh) wordpress_test root root 127.0.0.1 ${{ matrix.wp }}
+          curl -fsSL https://raw.githubusercontent.com/wp-cli/scaffold-command/main/templates/install-wp-tests.sh -o /tmp/install-wp-tests.sh
+          bash /tmp/install-wp-tests.sh wordpress_test root root 127.0.0.1 ${{ matrix.wp }}
 
       - name: Run PHPUnit
         run: composer test

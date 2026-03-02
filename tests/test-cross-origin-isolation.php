@@ -105,6 +105,9 @@ class Test_Cross_Origin_Isolation extends WP_UnitTestCase {
 
 	/**
 	 * Proceeds (starts output buffer) when all conditions are met.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
 	 */
 	public function test_starts_output_buffer_when_all_conditions_met() {
 		add_filter( 'csme_use_coep_coop', '__return_true' );
@@ -123,7 +126,10 @@ class Test_Cross_Origin_Isolation extends WP_UnitTestCase {
 
 		$this->assertSame( $ob_level_before + 1, $ob_level_after );
 
-		// Clean up the output buffer.
-		ob_end_clean();
+		// Clean up the output buffer without invoking the callback
+		// (which would call header() and fail since output already started).
+		while ( ob_get_level() > $ob_level_before ) {
+			ob_end_clean();
+		}
 	}
 }

@@ -7,7 +7,8 @@
 >
 	<testsuites>
 		<testsuite name="Client-Side Media Experiments">
-			<directory prefix="test-" suffix=".php">tests/</directory>
+			<directory suffix=".php">tests/</directory>
+			<exclude>tests/bootstrap.php</exclude>
 		</testsuite>
 	</testsuites>
 
