@@ -14,6 +14,7 @@ class Test_Cross_Origin_Isolation extends WP_UnitTestCase {
 		remove_all_filters( 'csme_use_coep_coop' );
 		unset( $_GET['action'] );
 		$GLOBALS['current_screen'] = null;
+		wp_set_current_user( 0 );
 		parent::tear_down();
 	}
 
@@ -74,6 +75,26 @@ class Test_Cross_Origin_Isolation extends WP_UnitTestCase {
 
 		// Simulate a third-party page builder action.
 		$_GET['action'] = 'elementor';
+
+		$ob_level_before = ob_get_level();
+		csme_set_up_cross_origin_isolation();
+		$ob_level_after = ob_get_level();
+
+		$this->assertSame( $ob_level_before, $ob_level_after );
+	}
+
+	/**
+	 * Returns early when no user is logged in.
+	 */
+	public function test_returns_early_when_no_user_logged_in() {
+		add_filter( 'csme_use_coep_coop', '__return_true' );
+
+		// Set up a post edit screen.
+		set_current_screen( 'post' );
+		$_GET['action'] = 'edit';
+
+		// Ensure no user is logged in.
+		wp_set_current_user( 0 );
 
 		$ob_level_before = ob_get_level();
 		csme_set_up_cross_origin_isolation();
