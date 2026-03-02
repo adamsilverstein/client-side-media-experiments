@@ -1,0 +1,13 @@
+.git
+.github
+.gitignore
+.distignore
+.phpcs-cache
+.phpunit.cache
+composer.json
+composer.lock
+node_modules
+phpcs.xml.dist
+phpunit.xml.dist
+tests
+vendor
