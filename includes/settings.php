@@ -66,6 +66,7 @@ function csme_settings_section_callback() {
 function csme_enabled_field_callback() {
 	$enabled = get_option( 'csme_enabled', 1 );
 	?>
+	<input type="hidden" name="csme_enabled" value="0" />
 	<label for="csme_enabled">
 		<input type="checkbox" id="csme_enabled" name="csme_enabled" value="1" <?php checked( $enabled, 1 ); ?> />
 		<?php esc_html_e( 'Enable client-side media processing support via COEP/COOP headers.', 'client-side-media-experiments' ); ?>
