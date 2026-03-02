@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<phpunit
+	bootstrap="tests/bootstrap.php"
+	backupGlobals="false"
+	colors="true"
+	beStrictAboutTestsThatDoNotTestAnything="true"
+>
+	<testsuites>
+		<testsuite name="Client-Side Media Experiments">
+			<directory suffix=".php">tests/</directory>
+			<exclude>tests/bootstrap.php</exclude>
+		</testsuite>
+	</testsuites>
+
+	<source>
+		<include>
+			<directory suffix=".php">includes/</directory>
+			<file>client-side-media-experiments.php</file>
+		</include>
+		<exclude>
+			<directory suffix=".php">vendor/</directory>
+		</exclude>
+	</source>
+</phpunit>
