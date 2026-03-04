@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0e12"/>
+      <stop offset="100%" stop-color="#1a2028"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#0073aa"/>
+      <stop offset="50%" stop-color="#005f8d"/>
+      <stop offset="100%" stop-color="#003d5c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.4">
+      <stop offset="0%" stop-color="#0073aa" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#0073aa" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shieldGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0.64
+                0 0 0 0 0.83
+                0 0 0 0.6 0" result="glowColor"/>
+      <feMerge>
+        <feMergeNode in="glowColor"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Dot grid pattern -->
+    <pattern id="dotGrid" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="0.8" fill="#00b4e6" opacity="0.05"/>
+    </pattern>
+    <!-- Accent line pattern -->
+    <pattern id="accentLines" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="24" x2="48" y2="24" stroke="#00b4e6" stroke-width="0.3" opacity="0.04"/>
+      <line x1="24" y1="0" x2="24" y2="48" stroke="#00b4e6" stroke-width="0.3" opacity="0.04"/>
+    </pattern>
+  </defs>
+
+  <!-- Background rounded rectangle -->
+  <rect width="256" height="256" rx="28" ry="28" fill="url(#bg)"/>
+
+  <!-- Dot grid overlay -->
+  <rect width="256" height="256" rx="28" ry="28" fill="url(#dotGrid)"/>
+
+  <!-- Accent lines overlay -->
+  <rect width="256" height="256" rx="28" ry="28" fill="url(#accentLines)"/>
+
+  <!-- Radial glow behind shield -->
+  <rect width="256" height="256" rx="28" ry="28" fill="url(#glow)"/>
+
+  <!-- Concentric isolation ring arcs -->
+  <circle cx="128" cy="120" r="100" fill="none" stroke="#00b4e6" stroke-width="0.8"
+          stroke-dasharray="8 12" opacity="0.08"/>
+  <circle cx="128" cy="120" r="115" fill="none" stroke="#00b4e6" stroke-width="0.5"
+          stroke-dasharray="5 15" opacity="0.05"/>
+  <circle cx="128" cy="120" r="85" fill="none" stroke="#00b4e6" stroke-width="0.6"
+          stroke-dasharray="6 10" opacity="0.06"/>
+
+  <!-- Shield shape - enlarged to fill ~80% of vertical space -->
+  <g filter="url(#shieldGlow)">
+    <path d="M128 24
+             L202 54
+             C202 54 207 132 177 178
+             C154 212 128 230 128 230
+             C128 230 102 212 79 178
+             C49 132 54 54 54 54
+             Z"
+          fill="url(#shield)" opacity="0.95"/>
+  </g>
+
+  <!-- Shield highlight/border -->
+  <path d="M128 24
+           L202 54
+           C202 54 207 132 177 178
+           C154 212 128 230 128 230
+           C128 230 102 212 79 178
+           C49 132 54 54 54 54
+           Z"
+        fill="none" stroke="#00b4e6" stroke-width="2" opacity="0.6"/>
+
+  <!-- Mountain/landscape icon inside shield - represents media/images -->
+  <g transform="translate(128, 118)">
+    <!-- Image frame -->
+    <rect x="-42" y="-34" width="84" height="62" rx="4" ry="4"
+          fill="none" stroke="#f0f4f8" stroke-width="3" opacity="0.9"/>
+
+    <!-- Large mountain -->
+    <polygon points="-33,23 -6,-16 20,23"
+             fill="#f0f4f8" opacity="0.9"/>
+
+    <!-- Small mountain -->
+    <polygon points="2,23 20,-5 38,23"
+             fill="#f0f4f8" opacity="0.65"/>
+
+    <!-- Sun circle -->
+    <circle cx="22" cy="-16" r="9" fill="#f0f4f8" opacity="0.75"/>
+  </g>
+
+</svg>
