@@ -1,0 +1,20 @@
+{
+	"name": "client-side-media-experiments",
+	"version": "0.1.0",
+	"private": true,
+	"description": "WordPress plugin enabling client-side media processing on Firefox and Safari via COEP/COOP headers.",
+	"license": "GPL-2.0-or-later",
+	"engines": {
+		"node": ">=20"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.58.2",
+		"@wordpress/e2e-test-utils-playwright": "^1.41.0",
+		"@wordpress/env": "^10.39.0",
+		"@wordpress/scripts": "^31.6.0"
+	},
+	"scripts": {
+		"wp-env": "wp-env",
+		"test:e2e": "wp-scripts test-playwright --config tests/e2e/playwright.config.ts"
+	}
+}

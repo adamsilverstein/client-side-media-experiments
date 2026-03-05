@@ -1,7 +1,9 @@
 vendor/
-node_modules/
 composer.lock
+node_modules/
 .phpunit.cache/
 .phpcs-cache
 dist/
 .phpunit.result.cache
+artifacts/
+test-results/
