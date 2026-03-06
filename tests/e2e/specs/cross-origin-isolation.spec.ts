@@ -84,21 +84,15 @@ test.describe( 'Cross-Origin Isolation', () => {
 		);
 	} );
 
-	test( 'should not send COEP/COOP headers on Chrome 137+', async ( {
-		admin,
+	test( 'should not send COEP/COOP headers when DIP is active', async ( {
 		page,
-		browserName,
 	} ) => {
-		test.skip(
-			browserName !== 'chromium',
-			'Only relevant for Chrome 137+'
-		);
-
+		// Simulate Chrome 137+ Document-Isolation-Policy mode via filter.
 		const responsePromise = page.waitForEvent( 'response', ( resp ) =>
 			resp.url().includes( '/wp-admin/post-new.php' )
 		);
 
-		await admin.createNewPost();
+		await page.goto( '/wp-admin/post-new.php?csme_force_dip=1' );
 
 		const response = await responsePromise;
 		const headers = response.headers();
