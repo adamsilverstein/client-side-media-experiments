@@ -32,7 +32,7 @@ HEIC support was removed from WordPress core due to patent restrictions that con
 
 * When enabled, HEIC/HEIF images are automatically converted to JPEG in the browser before upload.
 * The conversion uses the [heic2any](https://github.com/nicktomlin/heic2any) library, which is loaded dynamically from an external CDN only when a HEIC file is detected.
-* heic2any uses [libheif](https://github.com/nicktomlin/heic2any) (LGPL-3.0 licensed) for decoding. Since the library is loaded at runtime from a CDN rather than bundled with the plugin, it is treated as a separate work and does not affect the plugin's GPL-2.0-or-later license.
+* heic2any uses [libheif](https://github.com/strukturag/libheif) (LGPL-3.0 licensed) for decoding. Since the library is loaded at runtime from a CDN rather than bundled with the plugin, it is treated as a separate work and does not affect the plugin's GPL-2.0-or-later license.
 * The CDN URL is filterable via the `csme_heic_library_url` filter for self-hosting or version changes.
 
 **Requirements:**
