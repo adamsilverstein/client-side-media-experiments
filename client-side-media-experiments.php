@@ -39,3 +39,4 @@ define( 'CSME_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once CSME_PLUGIN_DIR . 'includes/settings.php';
 require_once CSME_PLUGIN_DIR . 'includes/cross-origin-isolation.php';
+require_once CSME_PLUGIN_DIR . 'includes/heic-support.php';
