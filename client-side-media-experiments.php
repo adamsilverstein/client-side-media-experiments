@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Client-Side Media Experiments
  * Plugin URI:  https://github.com/adamsilverstein/client-side-media-experiments
- * Description: Enables client-side media processing on Firefox and Safari via COEP/COOP cross-origin isolation headers.
+ * Description: Enables client-side media processing on Firefox and Safari via COEP/COOP cross-origin isolation headers, and adds HEIC/HEIF upload support with client-side conversion.
  * Version:     0.1.0
  * Requires at least: 6.8
  * Requires PHP: 7.4
