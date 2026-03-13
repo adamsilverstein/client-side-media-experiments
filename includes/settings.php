@@ -46,7 +46,7 @@ function csme_register_settings() {
 		'csme_heic_enabled',
 		array(
 			'type'              => 'integer',
-			'default'           => 0,
+			'default'           => 1,
 			'sanitize_callback' => 'csme_sanitize_enabled',
 		)
 	);
@@ -96,7 +96,7 @@ function csme_enabled_field_callback() {
  * Outputs the checkbox field for the HEIC enabled setting.
  */
 function csme_heic_enabled_field_callback() {
-	$enabled = get_option( 'csme_heic_enabled', 0 );
+	$enabled = get_option( 'csme_heic_enabled', 1 );
 	?>
 	<input type="hidden" name="csme_heic_enabled" value="0" />
 	<label for="csme_heic_enabled">

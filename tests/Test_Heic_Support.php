@@ -21,10 +21,10 @@ class Test_Heic_Support extends WP_UnitTestCase {
 	}
 
 	/**
-	 * HEIC support is disabled by default.
+	 * HEIC support is enabled by default.
 	 */
-	public function test_heic_disabled_by_default() {
-		$this->assertFalse( csme_is_heic_enabled() );
+	public function test_heic_enabled_by_default() {
+		$this->assertTrue( csme_is_heic_enabled() );
 	}
 
 	/**
@@ -40,6 +40,8 @@ class Test_Heic_Support extends WP_UnitTestCase {
 	 * HEIC MIME types are not added when disabled.
 	 */
 	public function test_mime_types_not_added_when_disabled() {
+		update_option( 'csme_heic_enabled', 0 );
+
 		$mime_types = csme_add_heic_mime_types( array( 'jpg|jpeg|jpe' => 'image/jpeg' ) );
 
 		$this->assertArrayNotHasKey( 'heic', $mime_types );
@@ -75,6 +77,8 @@ class Test_Heic_Support extends WP_UnitTestCase {
 	 * File type detection returns early when HEIC is disabled.
 	 */
 	public function test_filetype_check_returns_early_when_disabled() {
+		update_option( 'csme_heic_enabled', 0 );
+
 		$data = array(
 			'ext'             => false,
 			'type'            => false,
@@ -145,6 +149,8 @@ class Test_Heic_Support extends WP_UnitTestCase {
 	 * Script is not enqueued when HEIC is disabled.
 	 */
 	public function test_script_not_enqueued_when_disabled() {
+		update_option( 'csme_heic_enabled', 0 );
+
 		csme_enqueue_heic_scripts( 'post.php' );
 
 		$this->assertFalse( wp_script_is( 'csme-heic-support', 'enqueued' ) );

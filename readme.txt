@@ -28,7 +28,7 @@ This plugin restores support for Firefox and Safari by sending the older COEP/CO
 
 **HEIC Support:**
 
-HEIC support was removed from WordPress core due to patent restrictions that conflict with the GPL license. This plugin re-enables HEIC upload support as an opt-in feature:
+HEIC support was removed from WordPress core due to patent restrictions that conflict with the GPL license. This plugin re-enables HEIC upload support (enabled by default, can be disabled under Settings > Media):
 
 * When enabled, HEIC/HEIF images are automatically converted to JPEG in the browser before upload.
 * The conversion uses the [heic2any](https://github.com/nicktomlin/heic2any) library, which is loaded dynamically from an external CDN only when a HEIC file is detected.
@@ -68,7 +68,7 @@ When enabled in Settings > Media, the plugin converts HEIC/HEIF images to JPEG d
 
 = What about the HEIC license? =
 
-The heic2any library uses libheif (LGPL-3.0) for HEIC decoding. Since the library is loaded at runtime from a CDN and not bundled with the plugin, it does not affect the plugin's GPL-2.0-or-later license. HEIC support is disabled by default and must be explicitly enabled.
+The heic2any library uses libheif (LGPL-3.0) for HEIC decoding. Since the library is loaded at runtime from a CDN and not bundled with the plugin, it does not affect the plugin's GPL-2.0-or-later license. HEIC support is enabled by default but can be disabled under Settings > Media.
 
 = Can I self-host the HEIC conversion library? =
 

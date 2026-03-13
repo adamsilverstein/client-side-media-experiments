@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return bool
  */
 function csme_is_heic_enabled() {
-	return (bool) get_option( 'csme_heic_enabled', 0 );
+	return (bool) get_option( 'csme_heic_enabled', 1 );
 }
 
 /**
