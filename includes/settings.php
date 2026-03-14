@@ -13,6 +13,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Returns the default value for the csme_enabled setting based on browser type.
+ *
+ * Chromium 137+ uses Document-Isolation-Policy, so COEP/COOP headers should be
+ * off by default. For all other browsers, the headers should be on by default.
+ *
+ * @return int 1 if COEP/COOP should be enabled by default, 0 otherwise.
+ */
+function csme_get_enabled_default() {
+	$chrome_version = null;
+
+	if ( function_exists( 'wp_get_chrome_major_version' ) ) {
+		$chrome_version = wp_get_chrome_major_version();
+	} elseif ( function_exists( 'gutenberg_get_chrome_major_version' ) ) {
+		$chrome_version = gutenberg_get_chrome_major_version();
+	}
+
+	// Chromium 137+ uses Document-Isolation-Policy; COEP/COOP headers are not needed.
+	$use_dip = null !== $chrome_version && $chrome_version >= 137;
+
+	return $use_dip ? 0 : 1;
+}
+
+/**
  * Registers the plugin settings on the Media settings page.
  */
 function csme_register_settings() {
@@ -21,7 +44,7 @@ function csme_register_settings() {
 		'csme_enabled',
 		array(
 			'type'              => 'integer',
-			'default'           => 1,
+			'default'           => csme_get_enabled_default(),
 			'sanitize_callback' => 'csme_sanitize_enabled',
 		)
 	);
@@ -64,7 +87,7 @@ function csme_settings_section_callback() {
  * Outputs the checkbox field for the enabled setting.
  */
 function csme_enabled_field_callback() {
-	$enabled = get_option( 'csme_enabled', 1 );
+	$enabled = get_option( 'csme_enabled', csme_get_enabled_default() );
 	?>
 	<input type="hidden" name="csme_enabled" value="0" />
 	<label for="csme_enabled">
@@ -81,7 +104,7 @@ function csme_enabled_field_callback() {
  * @return bool Filtered value.
  */
 function csme_maybe_disable_coep_coop( $use_coep_coop ) {
-	if ( ! get_option( 'csme_enabled', 1 ) ) {
+	if ( ! get_option( 'csme_enabled', csme_get_enabled_default() ) ) {
 		return false;
 	}
 	return $use_coep_coop;
