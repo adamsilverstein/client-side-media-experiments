@@ -142,7 +142,14 @@
 				} )
 				.catch( function ( error ) {
 					if ( args.onError ) {
-						args.onError( error );
+						args.onError(
+							new Error(
+								'HEIC to JPEG conversion failed: ' +
+									( error && error.message
+										? error.message
+										: String( error ) )
+							)
+						);
 					}
 				} );
 		}

@@ -212,7 +212,7 @@ class Test_Heic_Support extends WP_UnitTestCase {
 	}
 
 	/**
-	 * CDN URL can be filtered.
+	 * CDN URL can be filtered and is used in localized script data.
 	 */
 	public function test_heic_library_url_filterable() {
 		update_option( 'csme_heic_enabled', 1 );
@@ -227,6 +227,10 @@ class Test_Heic_Support extends WP_UnitTestCase {
 		csme_enqueue_heic_scripts( 'post.php' );
 
 		$this->assertTrue( wp_script_is( 'csme-heic-support', 'enqueued' ) );
+
+		$data = wp_scripts()->get_data( 'csme-heic-support', 'data' );
+		$this->assertIsString( $data );
+		$this->assertStringContainsString( 'https://example.com/heic2any.min.js', $data );
 	}
 
 	/**
