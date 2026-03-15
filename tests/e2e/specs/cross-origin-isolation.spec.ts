@@ -88,14 +88,13 @@ test.describe( 'Cross-Origin Isolation', () => {
 		page,
 	} ) => {
 		// Simulate Chrome 137+ Document-Isolation-Policy mode via filter.
-		const responsePromise = page.waitForEvent( 'response', ( resp ) =>
-			resp.url().includes( '/wp-admin/post-new.php' )
+		// Navigate directly with the force_dip query param.
+		const response = await page.goto(
+			'/wp-admin/post-new.php?csme_force_dip=1'
 		);
 
-		await page.goto( '/wp-admin/post-new.php?csme_force_dip=1' );
-
-		const response = await responsePromise;
-		const headers = response.headers();
+		expect( response ).not.toBeNull();
+		const headers = response!.headers();
 
 		expect( headers[ 'cross-origin-opener-policy' ] ).toBeUndefined();
 		expect( headers[ 'cross-origin-embedder-policy' ] ).toBeUndefined();
