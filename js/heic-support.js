@@ -20,6 +20,7 @@
 
 	var CDN_URL = window.csmeHeicSupport.cdnUrl;
 	var CDN_INTEGRITY = window.csmeHeicSupport.cdnIntegrity || '';
+	var JPEG_QUALITY = parseFloat( window.csmeHeicSupport.jpegQuality ) || 0.92;
 	var heic2anyPromise = null;
 	var NOTICE_ID = 'csme-heic-converting';
 	var nativeHeicSupport = null; // null = untested, true/false = result
@@ -161,7 +162,7 @@
 				return heic2any( {
 					blob: file,
 					toType: 'image/jpeg',
-					quality: 0.92,
+					quality: JPEG_QUALITY,
 				} );
 			} )
 			.then( function ( result ) {

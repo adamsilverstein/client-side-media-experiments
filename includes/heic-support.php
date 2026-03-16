@@ -124,12 +124,23 @@ function csme_enqueue_heic_scripts( $hook_suffix ) {
 		'sha384-OTofQ0MEeiSgh62havBcemCIK0gqj809wX6UA0uPISNMRnR6NZyCdGzX3SbLrgwL'
 	);
 
+	/**
+	 * Filters the JPEG quality used when converting HEIC images.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param float $quality JPEG quality between 0 and 1. Default 0.92.
+	 */
+	$jpeg_quality = apply_filters( 'csme_heic_jpeg_quality', 0.92 );
+	$jpeg_quality = max( 0.0, min( 1.0, (float) $jpeg_quality ) );
+
 	wp_localize_script(
 		'csme-heic-support',
 		'csmeHeicSupport',
 		array(
 			'cdnUrl'       => esc_url( $cdn_url ),
 			'cdnIntegrity' => sanitize_text_field( $cdn_integrity ),
+			'jpegQuality'  => $jpeg_quality,
 		)
 	);
 }
