@@ -22,6 +22,52 @@
 	var CDN_INTEGRITY = window.csmeHeicSupport.cdnIntegrity || '';
 	var heic2anyPromise = null;
 	var NOTICE_ID = 'csme-heic-converting';
+	var nativeHeicSupport = null; // null = untested, true/false = result
+
+	/**
+	 * Tests whether the browser can natively decode HEIC images.
+	 *
+	 * Creates a tiny blob with image/heic MIME type and attempts to
+	 * decode it via createImageBitmap. Safari supports this natively.
+	 *
+	 * @return {Promise<boolean>} Resolves true if native HEIC is supported.
+	 */
+	function checkNativeHeicSupport() {
+		if ( nativeHeicSupport !== null ) {
+			return Promise.resolve( nativeHeicSupport );
+		}
+
+		if ( typeof createImageBitmap === 'undefined' ) {
+			nativeHeicSupport = false;
+			return Promise.resolve( false );
+		}
+
+		return new Promise( function ( resolve ) {
+			// 1x1 pixel HEIC: attempt to decode a small HEIC blob.
+			// Browsers without native HEIC support will reject.
+			var blob = new Blob(
+				[
+					new Uint8Array( [
+						0x00, 0x00, 0x00, 0x24, 0x66, 0x74, 0x79, 0x70,
+						0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
+						0x68, 0x65, 0x69, 0x63, 0x68, 0x65, 0x69, 0x78,
+						0x6d, 0x69, 0x66, 0x31, 0x4d, 0x69, 0x48, 0x45,
+						0x68, 0x65, 0x76, 0x63,
+					] ),
+				],
+				{ type: 'image/heic' }
+			);
+			createImageBitmap( blob )
+				.then( function () {
+					nativeHeicSupport = true;
+					resolve( true );
+				} )
+				.catch( function () {
+					nativeHeicSupport = false;
+					resolve( false );
+				} );
+		} );
+	}
 
 	/**
 	 * Shows an info notice while HEIC conversion is in progress.
@@ -155,49 +201,56 @@
 				return originalMediaUpload( args );
 			}
 
-			showConversionNotice();
+			// Skip conversion if the browser handles HEIC natively (e.g. Safari).
+			checkNativeHeicSupport().then( function ( supported ) {
+				if ( supported ) {
+					return originalMediaUpload( args );
+				}
 
-			Promise.all(
-				files.map( function ( file ) {
-					if ( isHeicFile( file ) ) {
-						return convertHeicToJpeg( file ).catch(
-							function ( error ) {
-								if ( args.onError ) {
-									args.onError(
-										new Error(
-											'HEIC to JPEG conversion failed for "' +
-												file.name +
-												'": ' +
-												( error && error.message
-													? error.message
-													: String( error ) )
-										)
-									);
+				showConversionNotice();
+
+				Promise.all(
+					files.map( function ( file ) {
+						if ( isHeicFile( file ) ) {
+							return convertHeicToJpeg( file ).catch(
+								function ( error ) {
+									if ( args.onError ) {
+										args.onError(
+											new Error(
+												'HEIC to JPEG conversion failed for "' +
+													file.name +
+													'": ' +
+													( error && error.message
+														? error.message
+														: String( error ) )
+											)
+										);
+									}
+									return null;
 								}
-								return null;
-							}
-						);
+							);
+						}
+						return Promise.resolve( file );
+					} )
+				).then( function ( convertedFiles ) {
+					removeConversionNotice();
+					var successfulFiles = convertedFiles.filter(
+						function ( file ) {
+							return file !== null;
+						}
+					);
+					if ( successfulFiles.length === 0 ) {
+						return;
 					}
-					return Promise.resolve( file );
-				} )
-			).then( function ( convertedFiles ) {
-				removeConversionNotice();
-				var successfulFiles = convertedFiles.filter(
-					function ( file ) {
-						return file !== null;
+					var newArgs = {};
+					for ( var key in args ) {
+						if ( args.hasOwnProperty( key ) ) {
+							newArgs[ key ] = args[ key ];
+						}
 					}
-				);
-				if ( successfulFiles.length === 0 ) {
-					return;
-				}
-				var newArgs = {};
-				for ( var key in args ) {
-					if ( args.hasOwnProperty( key ) ) {
-						newArgs[ key ] = args[ key ];
-					}
-				}
-				newArgs.filesList = successfulFiles;
-				originalMediaUpload( newArgs );
+					newArgs.filesList = successfulFiles;
+					originalMediaUpload( newArgs );
+				} );
 			} );
 		}
 
