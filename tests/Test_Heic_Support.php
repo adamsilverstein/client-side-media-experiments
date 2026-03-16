@@ -256,7 +256,7 @@ class Test_Heic_Support extends WP_UnitTestCase {
 	 * The csme_heic_enabled setting is registered correctly.
 	 */
 	public function test_heic_setting_registered() {
-		do_action( 'admin_init' );
+		csme_register_settings();
 
 		$registered = get_registered_settings();
 		$this->assertArrayHasKey( 'csme_heic_enabled', $registered );
