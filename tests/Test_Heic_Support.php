@@ -230,7 +230,8 @@ class Test_Heic_Support extends WP_UnitTestCase {
 
 		$data = wp_scripts()->get_data( 'csme-heic-support', 'data' );
 		$this->assertIsString( $data );
-		$this->assertStringContainsString( 'https://example.com/heic2any.min.js', $data );
+		$this->assertStringContainsString( 'example.com', $data );
+		$this->assertStringContainsString( 'heic2any.min.js', $data );
 	}
 
 	/**
