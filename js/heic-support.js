@@ -185,26 +185,42 @@
 	}
 
 	/**
-	 * Converts a file if it is HEIC, otherwise returns it unchanged.
+	 * Sideloads the original HEIC file to an existing attachment.
 	 *
-	 * @param {File} file The file to potentially convert.
-	 * @return {Promise<File|null>} The converted or original file, or null on error.
+	 * After the JPEG version is uploaded and subsizes are generated,
+	 * this uploads the original HEIC as the 'original' image size
+	 * so the raw file is preserved on the server.
+	 *
+	 * @param {File}   heicFile     The original HEIC file.
+	 * @param {number} attachmentId The attachment ID to sideload to.
 	 */
-	function convertIfHeic( file ) {
-		if ( ! isHeicFile( file ) ) {
-			return Promise.resolve( file );
-		}
-		return convertHeicToJpeg( file ).catch( function () {
-			return null;
+	function sideloadOriginalHeic( heicFile, attachmentId ) {
+		var formData = new FormData();
+		formData.append( 'file', heicFile );
+		formData.append( 'image_size', 'original' );
+		formData.append( 'convert_format', 'false' );
+
+		wp.apiFetch( {
+			path: '/wp/v2/media/' + attachmentId + '/sideload',
+			method: 'POST',
+			body: formData,
+		} ).catch( function ( error ) {
+			// eslint-disable-next-line no-console
+			console.warn(
+				'Failed to sideload original HEIC file:',
+				error
+			);
 		} );
 	}
 
 	/**
 	 * Wraps the upload-media store's addItems action to convert HEIC files.
 	 *
-	 * This intercepts at the Redux action level rather than wrapping
-	 * settings.mediaUpload, which is fragile because Gutenberg's
-	 * ExperimentalBlockEditorProvider overwrites it on re-renders.
+	 * Converts HEIC to JPEG for upload and subsize generation, then
+	 * sideloads the original HEIC back to the attachment so the raw
+	 * file is preserved. This intercepts at the Redux action level
+	 * rather than wrapping settings.mediaUpload, which is fragile
+	 * because Gutenberg's provider overwrites it on re-renders.
 	 */
 	function wrapAddItems() {
 		var uploadStore;
@@ -240,20 +256,74 @@
 
 				showConversionNotice();
 
-				Promise.all( files.map( convertIfHeic ) ).then(
+				// Build a map of original HEIC files keyed by index.
+				var heicOriginals = {};
+				var conversionPromises = files.map( function ( file, idx ) {
+					if ( ! isHeicFile( file ) ) {
+						return Promise.resolve( file );
+					}
+					heicOriginals[ idx ] = file;
+					return convertHeicToJpeg( file ).catch( function ( error ) {
+						if ( args.onError ) {
+							args.onError(
+								new Error(
+									'HEIC to JPEG conversion failed for "' +
+										file.name + '": ' +
+										( error && error.message
+											? error.message
+											: String( error ) )
+								)
+							);
+						}
+						return null;
+					} );
+				} );
+
+				Promise.all( conversionPromises ).then(
 					function ( convertedFiles ) {
 						removeConversionNotice();
-						var successfulFiles = convertedFiles.filter(
-							function ( file ) {
-								return file !== null;
+						var successfulFiles = [];
+						var heicMap = {};
+
+						convertedFiles.forEach( function ( file, idx ) {
+							if ( file !== null ) {
+								var newIdx = successfulFiles.length;
+								successfulFiles.push( file );
+								if ( heicOriginals[ idx ] ) {
+									heicMap[ newIdx ] = heicOriginals[ idx ];
+								}
 							}
-						);
+						} );
+
 						if ( successfulFiles.length === 0 ) {
 							return;
 						}
+
+						// Track which converted files had HEIC originals
+						// so we can sideload after upload completes.
+						var fileIndex = 0;
+						var originalOnSuccess = args.onSuccess;
+						var wrappedOnSuccess = function ( attachments ) {
+							// Sideload each original HEIC to its attachment.
+							attachments.forEach( function ( attachment ) {
+								if ( heicMap[ fileIndex ] && attachment.id ) {
+									sideloadOriginalHeic(
+										heicMap[ fileIndex ],
+										attachment.id
+									);
+								}
+								fileIndex++;
+							} );
+
+							if ( originalOnSuccess ) {
+								originalOnSuccess( attachments );
+							}
+						};
+
 						originalAddItems( {
 							...args,
 							files: successfulFiles,
+							onSuccess: wrappedOnSuccess,
 						} );
 					}
 				);
