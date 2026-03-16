@@ -15,6 +15,8 @@ class Test_Heic_Support extends WP_UnitTestCase {
 		remove_all_filters( 'upload_mimes' );
 		remove_all_filters( 'wp_check_filetype_and_ext' );
 		remove_all_filters( 'csme_heic_library_url' );
+		remove_all_filters( 'client_side_supported_mime_types' );
+		remove_all_filters( 'image_editor_output_format' );
 		wp_dequeue_script( 'csme-heic-support' );
 		wp_deregister_script( 'csme-heic-support' );
 		parent::tear_down();
@@ -320,6 +322,57 @@ class Test_Heic_Support extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'heic', $mimes );
 		$this->assertArrayHasKey( 'heif', $mimes );
 		$this->assertArrayHasKey( 'jpg|jpeg|jpe', $mimes );
+	}
+
+	/**
+	 * HEIC MIME types are added to client-side supported types when enabled.
+	 */
+	public function test_client_side_supported_mime_types_filter() {
+		update_option( 'csme_heic_enabled', 1 );
+
+		$defaults = array( 'image/jpeg', 'image/png' );
+		$types    = csme_add_heic_client_side_mime_types( $defaults );
+
+		$this->assertContains( 'image/heic', $types );
+		$this->assertContains( 'image/heif', $types );
+		$this->assertContains( 'image/jpeg', $types );
+	}
+
+	/**
+	 * HEIC MIME types are not added to client-side types when disabled.
+	 */
+	public function test_client_side_supported_mime_types_disabled() {
+		update_option( 'csme_heic_enabled', 0 );
+
+		$defaults = array( 'image/jpeg', 'image/png' );
+		$types    = csme_add_heic_client_side_mime_types( $defaults );
+
+		$this->assertNotContains( 'image/heic', $types );
+		$this->assertNotContains( 'image/heif', $types );
+	}
+
+	/**
+	 * HEIC output format maps to JPEG when enabled.
+	 */
+	public function test_heic_output_format_filter() {
+		update_option( 'csme_heic_enabled', 1 );
+
+		$formats = csme_heic_output_format( array() );
+
+		$this->assertSame( 'image/jpeg', $formats['image/heic'] );
+		$this->assertSame( 'image/jpeg', $formats['image/heif'] );
+	}
+
+	/**
+	 * HEIC output format is not added when disabled.
+	 */
+	public function test_heic_output_format_filter_disabled() {
+		update_option( 'csme_heic_enabled', 0 );
+
+		$formats = csme_heic_output_format( array() );
+
+		$this->assertArrayNotHasKey( 'image/heic', $formats );
+		$this->assertArrayNotHasKey( 'image/heif', $formats );
 	}
 
 	/**
