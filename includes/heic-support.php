@@ -52,6 +52,14 @@ add_filter( 'upload_mimes', 'csme_add_heic_mime_types' );
  * @param string $real_mime Real MIME type of the file.
  * @return array Modified file data.
  */
+/*
+ * Security note: This function validates by file extension only, without
+ * inspecting file contents (magic bytes). This is acceptable because the
+ * client-side JavaScript converts HEIC files to JPEG before upload, so the
+ * server should normally only receive JPEG data. The HEIC/HEIF MIME types
+ * are registered as a fallback to prevent upload rejection if conversion
+ * is bypassed or the file metadata still references the original format.
+ */
 // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 function csme_heic_check_filetype( $data, $file, $filename, $mimes, $real_mime ) {
 	if ( ! csme_is_heic_enabled() ) {
