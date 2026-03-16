@@ -303,4 +303,42 @@ class Test_Heic_Support extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'name="csme_heic_enabled"', $output );
 		$this->assertStringNotContainsString( "checked='checked'", $output );
 	}
+
+	/**
+	 * The upload_mimes filter includes HEIC types when hooked.
+	 */
+	public function test_upload_mimes_filter_integration() {
+		update_option( 'csme_heic_enabled', 1 );
+
+		add_filter( 'upload_mimes', 'csme_add_heic_mime_types' );
+
+		$defaults = array( 'jpg|jpeg|jpe' => 'image/jpeg' );
+		$mimes    = apply_filters( 'upload_mimes', $defaults );
+
+		$this->assertArrayHasKey( 'heic', $mimes );
+		$this->assertArrayHasKey( 'heif', $mimes );
+		$this->assertArrayHasKey( 'jpg|jpeg|jpe', $mimes );
+	}
+
+	/**
+	 * The csme_heic_library_url filter sanitizes javascript: URLs.
+	 */
+	public function test_malicious_library_url_sanitized() {
+		update_option( 'csme_heic_enabled', 1 );
+
+		add_filter(
+			'csme_heic_library_url',
+			function () {
+				return 'javascript:alert(document.cookie)';
+			}
+		);
+
+		csme_enqueue_heic_scripts( 'post.php' );
+
+		$this->assertTrue( wp_script_is( 'csme-heic-support', 'enqueued' ) );
+
+		$data = wp_scripts()->get_data( 'csme-heic-support', 'data' );
+		$this->assertIsString( $data );
+		$this->assertStringNotContainsString( 'javascript:', $data );
+	}
 }
