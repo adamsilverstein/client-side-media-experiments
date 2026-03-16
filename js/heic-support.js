@@ -185,29 +185,27 @@
 	}
 
 	/**
-	 * Sideloads the original HEIC file to an existing attachment.
+	 * Replaces the main attached file with the original HEIC.
 	 *
 	 * After the JPEG version is uploaded and subsizes are generated,
-	 * this uploads the original HEIC as the 'original' image size
-	 * so the raw file is preserved on the server.
+	 * this replaces the main file with the original HEIC and deletes
+	 * the orphaned JPEG so it doesn't linger on disk.
 	 *
 	 * @param {File}   heicFile     The original HEIC file.
-	 * @param {number} attachmentId The attachment ID to sideload to.
+	 * @param {number} attachmentId The attachment ID to update.
 	 */
-	function sideloadOriginalHeic( heicFile, attachmentId ) {
+	function replaceWithOriginalHeic( heicFile, attachmentId ) {
 		var formData = new FormData();
 		formData.append( 'file', heicFile );
-		formData.append( 'image_size', 'original' );
-		formData.append( 'convert_format', 'false' );
 
 		wp.apiFetch( {
-			path: '/wp/v2/media/' + attachmentId + '/sideload',
+			path: '/csme/v1/replace-original/' + attachmentId,
 			method: 'POST',
 			body: formData,
 		} ).catch( function ( error ) {
 			// eslint-disable-next-line no-console
 			console.warn(
-				'Failed to sideload original HEIC file:',
+				'Failed to replace main file with original HEIC:',
 				error
 			);
 		} );
@@ -307,7 +305,7 @@
 							// Sideload each original HEIC to its attachment.
 							attachments.forEach( function ( attachment ) {
 								if ( heicMap[ fileIndex ] && attachment.id ) {
-									sideloadOriginalHeic(
+									replaceWithOriginalHeic(
 										heicMap[ fileIndex ],
 										attachment.id
 									);

@@ -192,3 +192,119 @@ function csme_enqueue_heic_scripts( $hook_suffix ) {
 	);
 }
 add_action( 'admin_enqueue_scripts', 'csme_enqueue_heic_scripts' );
+
+/**
+ * Registers the REST route for replacing the original file on an attachment.
+ *
+ * After client-side HEIC→JPEG conversion, the JPEG is uploaded as the main
+ * file. This endpoint replaces it with the original HEIC and cleans up the
+ * orphaned JPEG so it doesn't linger on disk after attachment deletion.
+ */
+function csme_register_replace_original_route() {
+	register_rest_route(
+		'csme/v1',
+		'/replace-original/(?P<id>[\d]+)',
+		array(
+			'methods'             => 'POST',
+			'callback'            => 'csme_replace_original_file',
+			'permission_callback' => function ( $request ) {
+				return current_user_can( 'edit_post', $request['id'] );
+			},
+			'args'                => array(
+				'id' => array(
+					'required'          => true,
+					'validate_callback' => function ( $param ) {
+						return is_numeric( $param ) && get_post( $param );
+					},
+				),
+			),
+		)
+	);
+}
+add_action( 'rest_api_init', 'csme_register_replace_original_route' );
+
+/**
+ * Handles replacing the main attached file with an uploaded HEIC original.
+ *
+ * @param WP_REST_Request $request The request object.
+ * @return WP_REST_Response|WP_Error Response or error.
+ */
+function csme_replace_original_file( $request ) {
+	$attachment_id = (int) $request['id'];
+	$post          = get_post( $attachment_id );
+
+	if ( ! $post || 'attachment' !== $post->post_type ) {
+		return new WP_Error( 'invalid_attachment', 'Invalid attachment ID.', array( 'status' => 404 ) );
+	}
+
+	$files = $request->get_file_params();
+	if ( empty( $files['file'] ) ) {
+		return new WP_Error( 'no_file', 'No file uploaded.', array( 'status' => 400 ) );
+	}
+
+	$file = $files['file'];
+
+	// Validate HEIC/HEIF MIME type.
+	$extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+	if ( ! in_array( $extension, array( 'heic', 'heif' ), true ) ) {
+		return new WP_Error( 'invalid_type', 'Only HEIC/HEIF files are accepted.', array( 'status' => 400 ) );
+	}
+
+	// Get the current main file path.
+	$upload_dir   = wp_get_upload_dir();
+	$old_relative = get_post_meta( $attachment_id, '_wp_attached_file', true );
+	$old_path     = trailingslashit( $upload_dir['basedir'] ) . $old_relative;
+	$target_dir   = dirname( $old_path );
+
+	// Move the uploaded HEIC to the same directory as the attachment.
+	$new_filename = wp_unique_filename( $target_dir, $file['name'] );
+	$new_path     = trailingslashit( $target_dir ) . $new_filename;
+
+	if ( ! move_uploaded_file( $file['tmp_name'], $new_path ) ) {
+		return new WP_Error( 'move_failed', 'Failed to move uploaded file.', array( 'status' => 500 ) );
+	}
+
+	// Set correct permissions.
+	$stat  = stat( $target_dir );
+	$perms = $stat['mode'] & 0000666;
+	chmod( $new_path, $perms );
+
+	// Build the new relative path.
+	$new_relative = str_replace( trailingslashit( $upload_dir['basedir'] ), '', $new_path );
+
+	// Delete the old JPEG main file.
+	if ( file_exists( $old_path ) && $old_path !== $new_path ) {
+		wp_delete_file( $old_path );
+	}
+
+	// Update the attached file meta to point to the HEIC.
+	update_post_meta( $attachment_id, '_wp_attached_file', $new_relative );
+
+	// Update attachment metadata: set the new file path.
+	$metadata = wp_get_attachment_metadata( $attachment_id );
+	if ( is_array( $metadata ) ) {
+		$metadata['file'] = $new_relative;
+
+		// Store the HEIC as the original_image if a scaled version exists.
+		if ( ! empty( $metadata['sizes'] ) ) {
+			$metadata['original_image'] = $new_filename;
+		}
+
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+	}
+
+	// Update post MIME type.
+	wp_update_post(
+		array(
+			'ID'             => $attachment_id,
+			'post_mime_type' => 'image/' . $extension,
+		)
+	);
+
+	return rest_ensure_response(
+		array(
+			'success' => true,
+			'file'    => $new_relative,
+		)
+	);
+}
