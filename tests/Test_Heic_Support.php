@@ -250,4 +250,57 @@ class Test_Heic_Support extends WP_UnitTestCase {
 		$this->assertFalse( $result['ext'] );
 		$this->assertFalse( $result['type'] );
 	}
+
+	/**
+	 * The csme_heic_enabled setting is registered correctly.
+	 */
+	public function test_heic_setting_registered() {
+		do_action( 'admin_init' );
+
+		$registered = get_registered_settings();
+		$this->assertArrayHasKey( 'csme_heic_enabled', $registered );
+		$this->assertSame( 'integer', $registered['csme_heic_enabled']['type'] );
+		$this->assertSame( 1, $registered['csme_heic_enabled']['default'] );
+	}
+
+	/**
+	 * The sanitize callback normalizes values to 0 or 1.
+	 */
+	public function test_sanitize_enabled_callback() {
+		$this->assertSame( 1, csme_sanitize_enabled( 1 ) );
+		$this->assertSame( 1, csme_sanitize_enabled( '1' ) );
+		$this->assertSame( 1, csme_sanitize_enabled( 'yes' ) );
+		$this->assertSame( 0, csme_sanitize_enabled( 0 ) );
+		$this->assertSame( 0, csme_sanitize_enabled( '' ) );
+		$this->assertSame( 0, csme_sanitize_enabled( null ) );
+	}
+
+	/**
+	 * The HEIC enabled field callback renders a checked checkbox.
+	 */
+	public function test_heic_enabled_field_callback_checked() {
+		update_option( 'csme_heic_enabled', 1 );
+
+		ob_start();
+		csme_heic_enabled_field_callback();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="csme_heic_enabled"', $output );
+		$this->assertStringContainsString( 'type="checkbox"', $output );
+		$this->assertStringContainsString( 'checked', $output );
+	}
+
+	/**
+	 * The HEIC enabled field callback renders unchecked when disabled.
+	 */
+	public function test_heic_enabled_field_callback_unchecked() {
+		update_option( 'csme_heic_enabled', 0 );
+
+		ob_start();
+		csme_heic_enabled_field_callback();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="csme_heic_enabled"', $output );
+		$this->assertStringNotContainsString( "checked='checked'", $output );
+	}
 }
