@@ -19,6 +19,7 @@
 	}
 
 	var CDN_URL = window.csmeHeicSupport.cdnUrl;
+	var CDN_INTEGRITY = window.csmeHeicSupport.cdnIntegrity || '';
 	var heic2anyPromise = null;
 
 	/**
@@ -49,6 +50,10 @@
 		heic2anyPromise = new Promise( function ( resolve, reject ) {
 			var script = document.createElement( 'script' );
 			script.src = CDN_URL;
+			if ( CDN_INTEGRITY ) {
+				script.integrity = CDN_INTEGRITY;
+				script.crossOrigin = 'anonymous';
+			}
 			script.onload = function () {
 				if ( window.heic2any ) {
 					resolve( window.heic2any );

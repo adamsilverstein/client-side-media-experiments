@@ -112,11 +112,24 @@ function csme_enqueue_heic_scripts( $hook_suffix ) {
 		true
 	);
 
+	/**
+	 * Filters the SRI integrity hash for the HEIC conversion library.
+	 *
+	 * @since 0.2.0
+	 *
+	 * @param string $integrity SRI hash for the heic2any library.
+	 */
+	$cdn_integrity = apply_filters(
+		'csme_heic_library_integrity',
+		'sha384-OTofQ0MEeiSgh62havBcemCIK0gqj809wX6UA0uPISNMRnR6NZyCdGzX3SbLrgwL'
+	);
+
 	wp_localize_script(
 		'csme-heic-support',
 		'csmeHeicSupport',
 		array(
-			'cdnUrl' => esc_url( $cdn_url ),
+			'cdnUrl'       => esc_url( $cdn_url ),
+			'cdnIntegrity' => sanitize_text_field( $cdn_integrity ),
 		)
 	);
 }
