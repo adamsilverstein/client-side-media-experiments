@@ -302,7 +302,8 @@ class Test_Heic_Support extends WP_UnitTestCase {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'name="csme_heic_enabled"', $output );
-		$this->assertStringNotContainsString( "checked='checked'", $output );
+		// Match any checked attribute format: checked, checked='checked', checked="checked".
+		$this->assertDoesNotMatchRegularExpression( '/\schecked[\s=>\'"]/', $output );
 	}
 
 	/**
