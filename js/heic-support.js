@@ -21,6 +21,34 @@
 	var CDN_URL = window.csmeHeicSupport.cdnUrl;
 	var CDN_INTEGRITY = window.csmeHeicSupport.cdnIntegrity || '';
 	var heic2anyPromise = null;
+	var NOTICE_ID = 'csme-heic-converting';
+
+	/**
+	 * Shows an info notice while HEIC conversion is in progress.
+	 */
+	function showConversionNotice() {
+		try {
+			wp.data
+				.dispatch( 'core/notices' )
+				.createInfoNotice( 'Converting HEIC image(s) to JPEG\u2026', {
+					id: NOTICE_ID,
+					isDismissible: false,
+				} );
+		} catch ( e ) {
+			// Notices store may not be available.
+		}
+	}
+
+	/**
+	 * Removes the HEIC conversion notice.
+	 */
+	function removeConversionNotice() {
+		try {
+			wp.data.dispatch( 'core/notices' ).removeNotice( NOTICE_ID );
+		} catch ( e ) {
+			// Notices store may not be available.
+		}
+	}
 
 	/**
 	 * Checks whether a file is HEIC or HEIF format.
@@ -127,6 +155,8 @@
 				return originalMediaUpload( args );
 			}
 
+			showConversionNotice();
+
 			Promise.all(
 				files.map( function ( file ) {
 					if ( isHeicFile( file ) ) {
@@ -151,6 +181,7 @@
 					return Promise.resolve( file );
 				} )
 			).then( function ( convertedFiles ) {
+				removeConversionNotice();
 				var successfulFiles = convertedFiles.filter(
 					function ( file ) {
 						return file !== null;
