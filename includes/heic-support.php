@@ -154,7 +154,7 @@ function csme_enqueue_heic_scripts( $hook_suffix ) {
 	wp_enqueue_script(
 		'csme-heic-support',
 		CSME_PLUGIN_URL . 'js/heic-support.js',
-		array( 'wp-data', 'wp-dom-ready', 'wp-block-editor', 'wp-notices' ),
+		array( 'wp-data', 'wp-dom-ready', 'wp-notices', 'wp-upload-media' ),
 		CSME_VERSION,
 		true
 	);

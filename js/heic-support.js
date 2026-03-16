@@ -1,9 +1,9 @@
 /**
  * HEIC/HEIF upload support for the block editor.
  *
- * Intercepts file uploads, converts HEIC/HEIF files to JPEG using
- * a dynamically loaded library, and passes the converted files to
- * the standard upload handler.
+ * Intercepts the upload-media store's addItems action to convert
+ * HEIC/HEIF files to JPEG using a dynamically loaded library before
+ * they enter Gutenberg's processing pipeline.
  *
  * The heic2any library (which uses libheif, LGPL-3.0 licensed) is
  * loaded from an external CDN only when a HEIC file is detected.
@@ -20,7 +20,8 @@
 
 	var CDN_URL = window.csmeHeicSupport.cdnUrl;
 	var CDN_INTEGRITY = window.csmeHeicSupport.cdnIntegrity || '';
-	var JPEG_QUALITY = parseFloat( window.csmeHeicSupport.jpegQuality ) || 0.92;
+	var JPEG_QUALITY =
+		parseFloat( window.csmeHeicSupport.jpegQuality ) || 0.92;
 	var heic2anyPromise = null;
 	var NOTICE_ID = 'csme-heic-converting';
 	var nativeHeicSupport = null; // null = untested, true/false = result
@@ -44,8 +45,6 @@
 		}
 
 		return new Promise( function ( resolve ) {
-			// 1x1 pixel HEIC: attempt to decode a small HEIC blob.
-			// Browsers without native HEIC support will reject.
 			var blob = new Blob(
 				[
 					new Uint8Array( [
@@ -186,122 +185,93 @@
 	}
 
 	/**
-	 * Wraps the block editor's mediaUpload setting to handle HEIC files.
+	 * Converts a file if it is HEIC, otherwise returns it unchanged.
 	 *
-	 * @return {boolean} True if wrapping succeeded.
+	 * @param {File} file The file to potentially convert.
+	 * @return {Promise<File|null>} The converted or original file, or null on error.
 	 */
-	function wrapMediaUpload() {
-		var settings = wp.data.select( 'core/block-editor' ).getSettings();
-		var originalMediaUpload = settings.mediaUpload;
+	function convertIfHeic( file ) {
+		if ( ! isHeicFile( file ) ) {
+			return Promise.resolve( file );
+		}
+		return convertHeicToJpeg( file ).catch( function () {
+			return null;
+		} );
+	}
 
-		if ( ! originalMediaUpload ) {
+	/**
+	 * Wraps the upload-media store's addItems action to convert HEIC files.
+	 *
+	 * This intercepts at the Redux action level rather than wrapping
+	 * settings.mediaUpload, which is fragile because Gutenberg's
+	 * ExperimentalBlockEditorProvider overwrites it on re-renders.
+	 */
+	function wrapAddItems() {
+		var uploadStore;
+		try {
+			uploadStore = wp.data.dispatch( 'core/upload-media' );
+		} catch ( e ) {
 			return false;
 		}
 
-		function wrappedMediaUpload( args ) {
-			if ( ! args.filesList || ! args.filesList.length ) {
-				return originalMediaUpload( args );
-			}
+		if ( ! uploadStore || ! uploadStore.addItems ) {
+			return false;
+		}
 
-			var files = Array.prototype.slice.call( args.filesList );
+		if ( uploadStore.addItems.__csmeHeicWrapped ) {
+			return true;
+		}
+
+		var originalAddItems = uploadStore.addItems.bind( uploadStore );
+
+		uploadStore.addItems = function ( args ) {
+			var files = args.files || [];
 			var hasHeic = files.some( isHeicFile );
 
 			if ( ! hasHeic ) {
-				return originalMediaUpload( args );
+				return originalAddItems( args );
 			}
 
-			// Skip conversion if the browser handles HEIC natively (e.g. Safari).
+			// Skip conversion if the browser handles HEIC natively.
 			checkNativeHeicSupport().then( function ( supported ) {
 				if ( supported ) {
-					return originalMediaUpload( args );
+					return originalAddItems( args );
 				}
 
 				showConversionNotice();
 
-				Promise.all(
-					files.map( function ( file ) {
-						if ( isHeicFile( file ) ) {
-							return convertHeicToJpeg( file ).catch(
-								function ( error ) {
-									if ( args.onError ) {
-										args.onError(
-											new Error(
-												'HEIC to JPEG conversion failed for "' +
-													file.name +
-													'": ' +
-													( error && error.message
-														? error.message
-														: String( error ) )
-											)
-										);
-									}
-									return null;
-								}
-							);
+				Promise.all( files.map( convertIfHeic ) ).then(
+					function ( convertedFiles ) {
+						removeConversionNotice();
+						var successfulFiles = convertedFiles.filter(
+							function ( file ) {
+								return file !== null;
+							}
+						);
+						if ( successfulFiles.length === 0 ) {
+							return;
 						}
-						return Promise.resolve( file );
-					} )
-				).then( function ( convertedFiles ) {
-					removeConversionNotice();
-					var successfulFiles = convertedFiles.filter(
-						function ( file ) {
-							return file !== null;
-						}
-					);
-					if ( successfulFiles.length === 0 ) {
-						return;
+						originalAddItems( {
+							...args,
+							files: successfulFiles,
+						} );
 					}
-					var newArgs = {};
-					for ( var key in args ) {
-						if ( args.hasOwnProperty( key ) ) {
-							newArgs[ key ] = args[ key ];
-						}
-					}
-					newArgs.filesList = successfulFiles;
-					originalMediaUpload( newArgs );
-				} );
+				);
 			} );
-		}
+		};
 
-		wrappedMediaUpload.__csmeHeicWrapped = true;
-
-		wp.data
-			.dispatch( 'core/block-editor' )
-			.updateSettings( { mediaUpload: wrappedMediaUpload } );
-
+		uploadStore.addItems.__csmeHeicWrapped = true;
 		return true;
 	}
 
-	/**
-	 * Attempts to wrap mediaUpload, returning success status.
-	 *
-	 * @return {boolean} True if wrapping succeeded.
-	 */
-	function tryWrap() {
-		try {
-			var settings = wp.data
-				.select( 'core/block-editor' )
-				.getSettings();
-			if (
-				settings.mediaUpload &&
-				! settings.mediaUpload.__csmeHeicWrapped
-			) {
-				return wrapMediaUpload();
-			}
-		} catch ( e ) {
-			// Store may not be initialized yet.
-		}
-		return false;
-	}
-
 	wp.domReady( function () {
-		if ( tryWrap() ) {
+		if ( wrapAddItems() ) {
 			return;
 		}
 
-		// Subscribe to store changes until mediaUpload becomes available.
+		// Subscribe to store changes until upload-media store is available.
 		var unsubscribe = wp.data.subscribe( function () {
-			if ( tryWrap() ) {
+			if ( wrapAddItems() ) {
 				unsubscribe();
 			}
 		} );
