@@ -130,33 +130,44 @@
 			Promise.all(
 				files.map( function ( file ) {
 					if ( isHeicFile( file ) ) {
-						return convertHeicToJpeg( file );
+						return convertHeicToJpeg( file ).catch(
+							function ( error ) {
+								if ( args.onError ) {
+									args.onError(
+										new Error(
+											'HEIC to JPEG conversion failed for "' +
+												file.name +
+												'": ' +
+												( error && error.message
+													? error.message
+													: String( error ) )
+										)
+									);
+								}
+								return null;
+							}
+						);
 					}
 					return Promise.resolve( file );
 				} )
-			)
-				.then( function ( convertedFiles ) {
-					var newArgs = {};
-					for ( var key in args ) {
-						if ( args.hasOwnProperty( key ) ) {
-							newArgs[ key ] = args[ key ];
-						}
+			).then( function ( convertedFiles ) {
+				var successfulFiles = convertedFiles.filter(
+					function ( file ) {
+						return file !== null;
 					}
-					newArgs.filesList = convertedFiles;
-					originalMediaUpload( newArgs );
-				} )
-				.catch( function ( error ) {
-					if ( args.onError ) {
-						args.onError(
-							new Error(
-								'HEIC to JPEG conversion failed: ' +
-									( error && error.message
-										? error.message
-										: String( error ) )
-							)
-						);
+				);
+				if ( successfulFiles.length === 0 ) {
+					return;
+				}
+				var newArgs = {};
+				for ( var key in args ) {
+					if ( args.hasOwnProperty( key ) ) {
+						newArgs[ key ] = args[ key ];
 					}
-				} );
+				}
+				newArgs.filesList = successfulFiles;
+				originalMediaUpload( newArgs );
+			} );
 		}
 
 		wrappedMediaUpload.__csmeHeicWrapped = true;
