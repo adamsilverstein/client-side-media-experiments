@@ -23,7 +23,7 @@ HEIC support was removed from WordPress core's wasm-vips build due to LGPL/GPL l
 
 - **Enabled by default** — can be toggled under **Settings → Media**.
 - HEIC/HEIF images are automatically converted to JPEG in the browser before upload.
-- Uses the [heic2any](https://github.com/nicktomlin/heic2any) library, loaded dynamically from an external CDN only when a HEIC file is detected.
+- Uses the [heic2any](https://github.com/alexcorvi/heic2any) library, loaded dynamically from an external CDN only when a HEIC file is detected.
 - heic2any uses [libheif](https://github.com/strukturag/libheif) (LGPL-3.0) for decoding. Since it is loaded at runtime from a CDN rather than bundled with the plugin, it is treated as a separate work and does not affect the plugin's GPL-2.0-or-later license.
 
 ## Requirements
@@ -67,4 +67,4 @@ add_filter( 'csme_heic_library_url', function () {
 
 This plugin is licensed under [GPL-2.0-or-later](https://www.gnu.org/licenses/gpl-2.0.html).
 
-The HEIC conversion library ([heic2any](https://github.com/nicktomlin/heic2any) / [libheif](https://github.com/strukturag/libheif)) is LGPL-3.0 licensed and loaded at runtime from an external CDN as a separate work.
+The HEIC conversion library ([heic2any](https://github.com/alexcorvi/heic2any) / [libheif](https://github.com/strukturag/libheif)) is LGPL-3.0 licensed and loaded at runtime from an external CDN as a separate work.
