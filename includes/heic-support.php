@@ -83,6 +83,45 @@ function csme_heic_check_filetype( $data, $file, $filename, $mimes, $real_mime )
 add_filter( 'wp_check_filetype_and_ext', 'csme_heic_check_filetype', 10, 5 );
 
 /**
+ * Adds HEIC/HEIF to the client-side supported MIME types.
+ *
+ * Tells Gutenberg's upload-media store that HEIC/HEIF files should be
+ * processed client-side rather than sent directly to the server.
+ *
+ * @param string[] $mime_types Array of MIME types.
+ * @return string[] Modified MIME types.
+ */
+function csme_add_heic_client_side_mime_types( $mime_types ) {
+	if ( ! csme_is_heic_enabled() ) {
+		return $mime_types;
+	}
+
+	$mime_types[] = 'image/heic';
+	$mime_types[] = 'image/heif';
+
+	return $mime_types;
+}
+add_filter( 'client_side_supported_mime_types', 'csme_add_heic_client_side_mime_types' );
+
+/**
+ * Maps HEIC/HEIF to JPEG for image output format conversion.
+ *
+ * @param array $formats Source-to-output MIME type map.
+ * @return array Modified formats.
+ */
+function csme_heic_output_format( $formats ) {
+	if ( ! csme_is_heic_enabled() ) {
+		return $formats;
+	}
+
+	$formats['image/heic'] = 'image/jpeg';
+	$formats['image/heif'] = 'image/jpeg';
+
+	return $formats;
+}
+add_filter( 'image_editor_output_format', 'csme_heic_output_format' );
+
+/**
  * Enqueues the HEIC support JavaScript on block editor pages.
  *
  * @param string $hook_suffix The current admin page hook suffix.
