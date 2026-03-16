@@ -134,14 +134,22 @@
 					resolve( window.heic2any );
 				} else {
 					reject(
-						new Error( 'heic2any not available after loading.' )
+						new Error(
+							'heic2any was not available after loading the script. ' +
+								'The CDN may be serving an unexpected response.'
+						)
 					);
 				}
 			};
 			script.onerror = function () {
 				heic2anyPromise = null;
 				reject(
-					new Error( 'Failed to load HEIC conversion library.' )
+					new Error(
+						'Failed to load HEIC conversion library from CDN. ' +
+							'Check your network connection or ask your site ' +
+							'administrator to host the library locally using ' +
+							'the csme_heic_library_url filter.'
+					)
 				);
 			};
 			document.head.appendChild( script );
