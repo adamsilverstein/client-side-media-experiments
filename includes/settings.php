@@ -81,6 +81,24 @@ function csme_register_settings() {
 		'media',
 		'csme_settings_section'
 	);
+
+	register_setting(
+		'media',
+		'csme_ultrahdr_enabled',
+		array(
+			'type'              => 'integer',
+			'default'           => 1,
+			'sanitize_callback' => 'csme_sanitize_enabled',
+		)
+	);
+
+	add_settings_field(
+		'csme_ultrahdr_enabled_field',
+		__( 'UltraHDR Support', 'client-side-media-experiments' ),
+		'csme_ultrahdr_enabled_field_callback',
+		'media',
+		'csme_settings_section'
+	);
 }
 add_action( 'admin_init', 'csme_register_settings' );
 
@@ -128,6 +146,23 @@ function csme_heic_enabled_field_callback() {
 	</label>
 	<p class="description">
 		<?php esc_html_e( 'When enabled, HEIC images are converted to JPEG in the browser using the heic2any library (which uses libheif, LGPL-3.0 licensed), loaded from an external CDN at runtime.', 'client-side-media-experiments' ); ?>
+	</p>
+	<?php
+}
+
+/**
+ * Outputs the checkbox field for the UltraHDR enabled setting.
+ */
+function csme_ultrahdr_enabled_field_callback() {
+	$enabled = get_option( 'csme_ultrahdr_enabled', 1 );
+	?>
+	<input type="hidden" name="csme_ultrahdr_enabled" value="0" />
+	<label for="csme_ultrahdr_enabled">
+		<input type="checkbox" id="csme_ultrahdr_enabled" name="csme_ultrahdr_enabled" value="1" <?php checked( $enabled, 1 ); ?> />
+		<?php esc_html_e( 'Detect UltraHDR images and preserve HDR gain map data in uploaded images and sub-sizes.', 'client-side-media-experiments' ); ?>
+	</label>
+	<p class="description">
+		<?php esc_html_e( 'When enabled, UltraHDR images (JPEGs with embedded gain maps) are detected during upload. The original HDR file is preserved and sub-sizes are regenerated with gain map data so HDR is available at all image sizes.', 'client-side-media-experiments' ); ?>
 	</p>
 	<?php
 }
