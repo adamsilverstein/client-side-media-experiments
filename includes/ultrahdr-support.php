@@ -64,7 +64,7 @@ function csme_enqueue_ultrahdr_scripts( $hook_suffix ) {
 		'csme-ultrahdr-support',
 		'csmeUltraHDRSupport',
 		array(
-			'libraryUrl' => esc_url( $library_url ),
+			'libraryUrl' => esc_url_raw( $library_url ),
 		)
 	);
 }

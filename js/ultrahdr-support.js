@@ -19,7 +19,6 @@
 		return;
 	}
 
-	var LIBRARY_URL = window.csmeUltraHDRSupport.libraryUrl || '';
 	var NOTICE_ID = 'csme-ultrahdr-processing';
 
 	/**
@@ -668,11 +667,13 @@
 		xmpSegment.set( xmpBytes, 4 + xmpNsBytes.length );
 
 		// Calculate where the gain map will be located.
-		// Primary image = SOI (2 bytes) + XMP segment + rest of SDR (after SOI).
 		var sdrRest = sdrData.slice( 2 ); // Everything after SOI.
-		var primaryLength = 2 + xmpSegment.length + sdrRest.length;
 
-		// Build MPF APP2 segment pointing to the gain map.
+		// Build MPF APP2 segment twice: first to determine its size, then
+		// with the correct primaryLength that includes the MPF segment itself.
+		var tempMpf = buildMPFSegment( 0, gainMapData.length );
+		var primaryLength =
+			2 + xmpSegment.length + tempMpf.length + sdrRest.length;
 		var mpfSegment = buildMPFSegment( primaryLength, gainMapData.length );
 
 		// Assemble: SOI + XMP APP1 + MPF APP2 + rest of SDR + gain map JPEG.
@@ -1072,24 +1073,60 @@
 				Promise.all( extractionPromises ).then( function (
 					fileDataList
 				) {
-					// Build a map of UltraHDR data keyed by file index.
+					// Build a map of UltraHDR data keyed by filename.
 					var ultraHDRMap = {};
-					fileDataList.forEach( function ( item, idx ) {
-						if ( item.gainMapData ) {
-							ultraHDRMap[ idx ] = {
+					fileDataList.forEach( function ( item ) {
+						if ( item.gainMapData && item.file.name ) {
+							ultraHDRMap[ item.file.name ] = {
 								originalFile: item.file,
 								gainMapData: item.gainMapData,
 							};
 						}
 					} );
 
-					var fileIndex = 0;
 					var originalOnSuccess = args.onSuccess;
 					var wrappedOnSuccess = function ( attachments ) {
 						var postProcessPromises = [];
 
 						attachments.forEach( function ( attachment ) {
-							var hdrData = ultraHDRMap[ fileIndex ];
+							// Match by source filename from the attachment.
+							var fileName =
+								attachment.source_url
+									? attachment.source_url
+											.split( '/' )
+											.pop()
+									: '';
+							// Also try the original filename.
+							var origName =
+								attachment.meta &&
+								attachment.meta.original_filename
+									? attachment.meta.original_filename
+									: '';
+
+							var hdrData = null;
+							// Try exact match, then prefix match (WP may
+							// append dimensions or deduplicate filenames).
+							Object.keys( ultraHDRMap ).forEach(
+								function ( key ) {
+									if ( hdrData ) {
+										return;
+									}
+									var base = key
+										.replace( /\.[^.]+$/, '' )
+										.toLowerCase();
+									var fLower = fileName.toLowerCase();
+									var oLower = origName.toLowerCase();
+									if (
+										fLower === key.toLowerCase() ||
+										oLower === key.toLowerCase() ||
+										fLower.indexOf( base ) === 0 ||
+										oLower.indexOf( base ) === 0
+									) {
+										hdrData = ultraHDRMap[ key ];
+									}
+								}
+							);
+
 							if ( hdrData && attachment.id ) {
 								// Restore original UltraHDR as main file.
 								var restorePromise =
@@ -1107,7 +1144,6 @@
 								);
 								postProcessPromises.push( subSizePromise );
 							}
-							fileIndex++;
 						} );
 
 						Promise.all( postProcessPromises ).then( function () {
