@@ -188,8 +188,8 @@
 	 * Replaces the main attached file with the original HEIC.
 	 *
 	 * After the JPEG version is uploaded and subsizes are generated,
-	 * this replaces the main file with the original HEIC and deletes
-	 * the orphaned JPEG so it doesn't linger on disk.
+	 * this uses the sideload endpoint with replace_file=true to swap
+	 * the main file to the original HEIC and delete the orphaned JPEG.
 	 *
 	 * @param {File}   heicFile     The original HEIC file.
 	 * @param {number} attachmentId The attachment ID to update.
@@ -197,9 +197,12 @@
 	function replaceWithOriginalHeic( heicFile, attachmentId ) {
 		var formData = new FormData();
 		formData.append( 'file', heicFile );
+		formData.append( 'image_size', 'original' );
+		formData.append( 'replace_file', 'true' );
+		formData.append( 'convert_format', 'false' );
 
 		wp.apiFetch( {
-			path: '/csme/v1/replace-original/' + attachmentId,
+			path: '/wp/v2/media/' + attachmentId + '/sideload',
 			method: 'POST',
 			body: formData,
 		} ).catch( function ( error ) {
