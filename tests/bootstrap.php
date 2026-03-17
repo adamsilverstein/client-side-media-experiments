@@ -6,7 +6,7 @@
  */
 
 // Define plugin constants.
-define( 'CSME_VERSION', '0.1.0' );
+define( 'CSME_VERSION', '0.2.0' );
 define( 'CSME_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
 define( 'CSME_PLUGIN_URL', 'http://example.org/wp-content/plugins/client-side-media-experiments/' );
 
@@ -38,6 +38,7 @@ require_once $_tests_dir . '/includes/functions.php';
 function _manually_load_plugin() {
 	require_once CSME_PLUGIN_DIR . 'includes/settings.php';
 	require_once CSME_PLUGIN_DIR . 'includes/cross-origin-isolation.php';
+	require_once CSME_PLUGIN_DIR . 'includes/heic-support.php';
 }
 
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
