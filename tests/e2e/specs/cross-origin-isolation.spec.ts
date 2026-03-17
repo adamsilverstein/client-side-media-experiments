@@ -32,8 +32,10 @@ test.describe( 'Cross-Origin Isolation', () => {
 			'Chrome 137+ uses DIP instead of COEP/COOP'
 		);
 
-		const responsePromise = page.waitForEvent( 'response', ( resp ) =>
-			resp.url().includes( '/wp-admin/post-new.php' )
+		const responsePromise = page.waitForResponse( ( resp ) =>
+			resp.url().includes( '/wp-admin/post-new.php' ) &&
+			resp.request().resourceType() === 'document' &&
+			resp.status() === 200
 		);
 
 		await admin.createNewPost();
@@ -53,8 +55,10 @@ test.describe( 'Cross-Origin Isolation', () => {
 	} ) => {
 		test.skip( browserName !== 'firefox', 'Only Firefox uses credentialless COEP' );
 
-		const responsePromise = page.waitForEvent( 'response', ( resp ) =>
-			resp.url().includes( '/wp-admin/post-new.php' )
+		const responsePromise = page.waitForResponse( ( resp ) =>
+			resp.url().includes( '/wp-admin/post-new.php' ) &&
+			resp.request().resourceType() === 'document' &&
+			resp.status() === 200
 		);
 
 		await admin.createNewPost();
@@ -72,8 +76,10 @@ test.describe( 'Cross-Origin Isolation', () => {
 	} ) => {
 		test.skip( browserName !== 'webkit', 'Only WebKit/Safari uses require-corp COEP' );
 
-		const responsePromise = page.waitForEvent( 'response', ( resp ) =>
-			resp.url().includes( '/wp-admin/post-new.php' )
+		const responsePromise = page.waitForResponse( ( resp ) =>
+			resp.url().includes( '/wp-admin/post-new.php' ) &&
+			resp.request().resourceType() === 'document' &&
+			resp.status() === 200
 		);
 
 		await admin.createNewPost();
@@ -127,8 +133,8 @@ test.describe( 'Cross-Origin Isolation', () => {
 		browserName,
 	} ) => {
 		test.skip(
-			browserName === 'chromium',
-			'Chrome 137+ uses DIP instead of COEP/COOP'
+			browserName !== 'firefox',
+			'Only Firefox uses credentialless for iframes'
 		);
 
 		await admin.createNewPost();
