@@ -39,6 +39,7 @@ function _manually_load_plugin() {
 	require_once CSME_PLUGIN_DIR . 'includes/settings.php';
 	require_once CSME_PLUGIN_DIR . 'includes/cross-origin-isolation.php';
 	require_once CSME_PLUGIN_DIR . 'includes/heic-support.php';
+	require_once CSME_PLUGIN_DIR . 'includes/ultrahdr-support.php';
 }
 
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
