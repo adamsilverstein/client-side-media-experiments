@@ -99,4 +99,14 @@ class Test_Add_Crossorigin_Attributes extends WP_UnitTestCase {
 
 		$this->assertStringNotContainsString( 'crossorigin', $result );
 	}
+
+	/**
+	 * Adds crossorigin to protocol-relative cross-origin URLs.
+	 */
+	public function test_adds_crossorigin_to_protocol_relative_url() {
+		$html   = '<img src="//cdn.example.com/photo.jpg" alt="photo">';
+		$result = csme_add_crossorigin_to_images( $html );
+
+		$this->assertStringContainsString( 'crossorigin="anonymous"', $result );
+	}
 }
