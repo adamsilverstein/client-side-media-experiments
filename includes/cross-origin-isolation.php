@@ -100,33 +100,33 @@ function csme_start_coep_coop_output_buffer() {
 			header( 'Cross-Origin-Opener-Policy: same-origin' );
 			header( 'Cross-Origin-Embedder-Policy: ' . $coep );
 
-			return csme_add_crossorigin_attributes( $output );
+			// Let core/Gutenberg handle AUDIO, LINK, SCRIPT, VIDEO, SOURCE.
+			if ( function_exists( 'wp_add_crossorigin_attributes' ) ) {
+				$output = wp_add_crossorigin_attributes( $output );
+			} elseif ( function_exists( 'gutenberg_add_crossorigin_attributes' ) ) {
+				$output = gutenberg_add_crossorigin_attributes( $output );
+			}
+
+			// Add back IMG support removed from core by Gutenberg#76618.
+			return csme_add_crossorigin_to_images( $output );
 		}
 	);
 }
 
 /**
- * Adds crossorigin="anonymous" to relevant tags in the given HTML string.
+ * Adds crossorigin="anonymous" to cross-origin IMG tags.
  *
- * This is the plugin's own implementation, modeled after
- * wp_add_crossorigin_attributes() / gutenberg_add_crossorigin_attributes().
- * It ensures images and other cross-origin resources always receive the
- * attribute, even when Gutenberg or core removes support for it.
+ * Core/Gutenberg removed IMG from the elements receiving crossorigin
+ * attributes (see Gutenberg#76618). Under COEP/COOP isolation images
+ * still need the attribute, so this plugin adds it back for IMG only.
  *
  * @since 0.3.0
  *
  * @param string $html HTML input.
  * @return string Modified HTML.
  */
-function csme_add_crossorigin_attributes( $html ) {
+function csme_add_crossorigin_to_images( $html ) {
 	if ( ! class_exists( 'WP_HTML_Tag_Processor' ) ) {
-		// Fall back to core/Gutenberg when the tag processor is unavailable.
-		if ( function_exists( 'wp_add_crossorigin_attributes' ) ) {
-			return wp_add_crossorigin_attributes( $html );
-		} elseif ( function_exists( 'gutenberg_add_crossorigin_attributes' ) ) {
-			return gutenberg_add_crossorigin_attributes( $html );
-		}
-
 		return $html;
 	}
 
@@ -134,52 +134,12 @@ function csme_add_crossorigin_attributes( $html ) {
 
 	$processor = new WP_HTML_Tag_Processor( $html );
 
-	// See https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/crossorigin.
-	$tags = array(
-		'AUDIO'  => 'src',
-		'IMG'    => 'src',
-		'LINK'   => 'href',
-		'SCRIPT' => 'src',
-		'VIDEO'  => 'src',
-		'SOURCE' => 'src',
-	);
-
-	$tag_names = array_keys( $tags );
-
-	while ( $processor->next_tag() ) {
-		$tag = $processor->get_tag();
-
-		if ( ! in_array( $tag, $tag_names, true ) ) {
-			continue;
-		}
-
-		if ( 'AUDIO' === $tag || 'VIDEO' === $tag ) {
-			$processor->set_bookmark( 'audio-video-parent' );
-		}
-
-		$processor->set_bookmark( 'resume' );
-
-		$sought = false;
-
+	while ( $processor->next_tag( 'IMG' ) ) {
 		$crossorigin = $processor->get_attribute( 'crossorigin' );
-
-		$url = $processor->get_attribute( $tags[ $tag ] );
+		$url         = $processor->get_attribute( 'src' );
 
 		if ( is_string( $url ) && ! str_starts_with( $url, $site_url ) && ! str_starts_with( $url, '/' ) && ! is_string( $crossorigin ) ) {
-			if ( 'SOURCE' === $tag ) {
-				$sought = $processor->seek( 'audio-video-parent' );
-
-				if ( $sought ) {
-					$processor->set_attribute( 'crossorigin', 'anonymous' );
-				}
-			} else {
-				$processor->set_attribute( 'crossorigin', 'anonymous' );
-			}
-
-			if ( $sought ) {
-				$processor->seek( 'resume' );
-				$processor->release_bookmark( 'audio-video-parent' );
-			}
+			$processor->set_attribute( 'crossorigin', 'anonymous' );
 		}
 	}
 
