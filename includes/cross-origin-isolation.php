@@ -142,9 +142,9 @@ function csme_add_crossorigin_to_images( $html ) {
 			continue;
 		}
 
-		$is_root_relative = 0 === strpos( $url, '/' ) && 0 !== strpos( $url, '//' );
+		$is_root_relative = str_starts_with( $url, '/' ) && ! str_starts_with( $url, '//' );
 
-		if ( 0 !== strpos( $url, $site_url ) && ! $is_root_relative ) {
+		if ( ! str_starts_with( $url, $site_url ) && ! $is_root_relative ) {
 			$processor->set_attribute( 'crossorigin', 'anonymous' );
 		}
 	}
