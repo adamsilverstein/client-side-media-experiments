@@ -100,15 +100,56 @@ function csme_start_coep_coop_output_buffer() {
 			header( 'Cross-Origin-Opener-Policy: same-origin' );
 			header( 'Cross-Origin-Embedder-Policy: ' . $coep );
 
+			// Let core/Gutenberg handle AUDIO, LINK, SCRIPT, VIDEO, SOURCE.
 			if ( function_exists( 'wp_add_crossorigin_attributes' ) ) {
-				return wp_add_crossorigin_attributes( $output );
+				$output = wp_add_crossorigin_attributes( $output );
 			} elseif ( function_exists( 'gutenberg_add_crossorigin_attributes' ) ) {
-				return gutenberg_add_crossorigin_attributes( $output );
+				$output = gutenberg_add_crossorigin_attributes( $output );
 			}
 
-			return $output;
+			// Add back IMG support removed from core by Gutenberg#76618.
+			return csme_add_crossorigin_to_images( $output );
 		}
 	);
+}
+
+/**
+ * Adds crossorigin="anonymous" to cross-origin IMG tags.
+ *
+ * Core/Gutenberg removed IMG from the elements receiving crossorigin
+ * attributes (see Gutenberg#76618). Under COEP/COOP isolation images
+ * still need the attribute, so this plugin adds it back for IMG only.
+ *
+ * @since 0.3.0
+ *
+ * @param string $html HTML input.
+ * @return string Modified HTML.
+ */
+function csme_add_crossorigin_to_images( $html ) {
+	if ( ! class_exists( 'WP_HTML_Tag_Processor' ) ) {
+		return $html;
+	}
+
+	$site_url = site_url();
+
+	$processor = new WP_HTML_Tag_Processor( $html );
+
+	while ( $processor->next_tag( 'IMG' ) ) {
+		$crossorigin = $processor->get_attribute( 'crossorigin' );
+		$url         = $processor->get_attribute( 'src' );
+
+		if ( ! is_string( $url ) || is_string( $crossorigin ) ) {
+			continue;
+		}
+
+		$is_root_relative = str_starts_with( $url, '/' ) && ! str_starts_with( $url, '//' );
+
+		if ( ! str_starts_with( $url, $site_url ) && ! $is_root_relative ) {
+			$processor->set_attribute( 'crossorigin', 'anonymous' );
+		}
+	}
+
+	return $processor->get_updated_html();
 }
 
 /**
