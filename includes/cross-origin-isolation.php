@@ -26,8 +26,8 @@ function csme_should_use_coep_coop() {
 
 	if ( function_exists( 'wp_get_chrome_major_version' ) ) {
 		$chrome_version = wp_get_chrome_major_version();
-	} elseif ( function_exists( 'gutenberg_get_chrome_major_version' ) ) {
-		$chrome_version = gutenberg_get_chrome_major_version();
+	} elseif ( function_exists( 'gutenberg_get_chromium_major_version' ) ) {
+		$chrome_version = gutenberg_get_chromium_major_version();
 	}
 
 	// DIP is used on Chrome 137+. Only use COEP/COOP when DIP is NOT active.
