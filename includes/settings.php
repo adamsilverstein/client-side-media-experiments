@@ -25,8 +25,8 @@ function csme_get_enabled_default() {
 
 	if ( function_exists( 'wp_get_chrome_major_version' ) ) {
 		$chrome_version = wp_get_chrome_major_version();
-	} elseif ( function_exists( 'gutenberg_get_chrome_major_version' ) ) {
-		$chrome_version = gutenberg_get_chrome_major_version();
+	} elseif ( function_exists( 'gutenberg_get_chromium_major_version' ) ) {
+		$chrome_version = gutenberg_get_chromium_major_version();
 	}
 
 	// Chromium 137+ uses Document-Isolation-Policy; COEP/COOP headers are not needed.

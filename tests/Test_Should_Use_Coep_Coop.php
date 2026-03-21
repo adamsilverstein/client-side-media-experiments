@@ -23,7 +23,7 @@ class Test_Should_Use_Coep_Coop extends WP_UnitTestCase {
 	 * Returns true when no Chrome version function exists (Firefox/Safari).
 	 */
 	public function test_returns_true_when_no_chrome_version_function() {
-		// Neither wp_get_chrome_major_version nor gutenberg_get_chrome_major_version
+		// Neither wp_get_chrome_major_version nor gutenberg_get_chromium_major_version
 		// should exist in the test environment by default.
 		$this->assertTrue( csme_should_use_coep_coop() );
 	}
