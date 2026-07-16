@@ -112,19 +112,6 @@ function csme_start_coep_coop_output_buffer() {
 }
 
 /**
- * Adds a JS flag so the client-side script knows COEP/COOP isolation is active.
- */
-function csme_set_js_flag() {
-	if ( ! csme_should_use_coep_coop() ) {
-		return;
-	}
-
-	wp_add_inline_script( 'wp-block-editor', 'window.__coepCoopIsolation = true', 'before' );
-}
-
-add_action( 'admin_init', 'csme_set_js_flag' );
-
-/**
  * Enqueues the COEP/COOP cross-origin isolation JavaScript.
  *
  * @param string $hook_suffix The current admin page hook suffix.
@@ -141,10 +128,13 @@ function csme_enqueue_scripts( $hook_suffix ) {
 	wp_enqueue_script(
 		'csme-cross-origin-isolation-coep',
 		CSME_PLUGIN_URL . 'js/cross-origin-isolation-coep.js',
-		array( 'wp-block-editor', 'wp-hooks', 'wp-compose' ),
+		array( 'wp-block-editor', 'wp-element', 'wp-hooks', 'wp-compose' ),
 		CSME_VERSION,
 		true
 	);
+
+	// Flag so the script knows COEP/COOP isolation (not DIP) is active.
+	wp_add_inline_script( 'csme-cross-origin-isolation-coep', 'window.__coepCoopIsolation = true;', 'before' );
 }
 
 add_action( 'admin_enqueue_scripts', 'csme_enqueue_scripts' );

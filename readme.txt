@@ -2,17 +2,17 @@
 Contributors: adamsilverstein
 Tags: media, performance, cross-origin, wasm
 Requires at least: 6.8
-Tested up to: 6.8
-Stable tag: 0.2.0
+Tested up to: 7.1
+Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Enables client-side media processing on Firefox and Safari via COEP/COOP cross-origin isolation headers, and optional HEIC upload support.
+Enables client-side media processing on Firefox and Safari via COEP/COOP cross-origin isolation headers.
 
 == Description ==
 
-WordPress 7.0 and Gutenberg include client-side media processing powered by WebAssembly (wasm-vips). This requires cross-origin isolation, which is achieved via Document-Isolation-Policy (DIP) on Chrome 137+.
+WordPress 7.1 and Gutenberg include client-side media processing powered by WebAssembly (wasm-vips). This requires cross-origin isolation, which is achieved via Document-Isolation-Policy (DIP) on Chrome 137+.
 
 However, Firefox and Safari do not yet support DIP, so client-side media processing is disabled on those browsers.
 
@@ -24,21 +24,16 @@ This plugin restores support for Firefox and Safari by sending the older COEP/CO
 * Adds `crossorigin="anonymous"` attributes to cross-origin resources.
 * Adds `credentialless` attribute to iframes so they continue working under COEP.
 * Filters embed previews for providers that do not support credentialless iframes (Facebook, SmugMug).
-* **Optional HEIC support:** Enables uploading HEIC/HEIF images (e.g. from iPhones) by converting them to JPEG on the client side.
 
-**HEIC Support:**
+**HEIC uploads:**
 
-HEIC support was removed from WordPress core due to patent restrictions that conflict with the GPL license. This plugin re-enables HEIC upload support (enabled by default, can be disabled under Settings > Media):
-
-* When enabled, HEIC/HEIF images are automatically converted to JPEG in the browser before upload.
-* The conversion uses the [heic2any](https://github.com/alexcorvi/heic2any) library, which is loaded dynamically from an external CDN only when a HEIC file is detected.
-* heic2any uses [libheif](https://github.com/strukturag/libheif) (LGPL-3.0 licensed) for decoding. Since the library is loaded at runtime from a CDN rather than bundled with the plugin, it is treated as a separate work and does not affect the plugin's GPL-2.0-or-later license.
-* The CDN URL is filterable via the `csme_heic_library_url` filter for self-hosting or version changes.
+WordPress 7.1 handles HEIC/HEIF uploads in core, including client-side conversion via the vips WASM pipeline or a canvas-based fallback for browsers with native HEVC decoding (such as Safari). This plugin no longer ships any HEIC handling of its own.
 
 **Requirements:**
 
-* WordPress 6.8+ with the Gutenberg plugin (which provides the client-side media processing feature), or WordPress 7.0+.
-* The client-side media processing feature must be enabled.
+* WordPress 6.8+ with the Gutenberg plugin (which provides the client-side media processing feature), or WordPress 7.1+.
+* The client-side media processing feature must be enabled (it is on by default in secure contexts).
+* HTTPS (or localhost): client-side media processing requires a secure context.
 
 == Installation ==
 
@@ -47,6 +42,10 @@ HEIC support was removed from WordPress core due to patent restrictions that con
 3. The plugin activates automatically on browsers that need COEP/COOP headers.
 
 == Frequently Asked Questions ==
+
+= Why is media still processed server-side? =
+
+Check that your site is served over HTTPS (or localhost). Client-side media processing requires a secure context; without one, cross-origin isolation is unavailable and WordPress silently falls back to server-side processing. The editor logs an informational message in the browser console explaining the reason for the fallback.
 
 = Do I need this plugin on Chrome? =
 
@@ -58,25 +57,24 @@ The COEP/COOP headers are only sent on block editor admin pages, not on the fron
 
 = Can I disable the COEP/COOP behavior? =
 
-Yes. Use the `csme_use_coep_coop` filter:
+Yes. Uncheck **Enable** under Settings > Media, or use the `csme_use_coep_coop` filter:
 
 `add_filter( 'csme_use_coep_coop', '__return_false' );`
 
-= How does HEIC support work? =
+= How do HEIC uploads work? =
 
-When enabled in Settings > Media, the plugin converts HEIC/HEIF images to JPEG directly in the browser before uploading them to WordPress. The conversion library (heic2any) is loaded from an external CDN only when a HEIC file is detected, so there is no impact on normal uploads.
-
-= What about the HEIC license? =
-
-The heic2any library uses libheif (LGPL-3.0) for HEIC decoding. Since the library is loaded at runtime from a CDN and not bundled with the plugin, it does not affect the plugin's GPL-2.0-or-later license. HEIC support is enabled by default but can be disabled under Settings > Media.
-
-= Can I self-host the HEIC conversion library? =
-
-Yes. Use the `csme_heic_library_url` filter to point to your own hosted copy:
-
-`add_filter( 'csme_heic_library_url', function() { return 'https://example.com/heic2any.min.js'; } );`
+WordPress 7.1 converts HEIC images client-side where possible and server-side otherwise. This plugin no longer includes any HEIC handling of its own.
 
 == Changelog ==
+
+= 1.0.0 =
+* First stable release, fully compatible with the WordPress 7.1 client-side media processing feature.
+* Removed the HEIC conversion module (heic2any/CDN): WordPress 7.1 handles HEIC uploads in core.
+* Fixed Chromium detection against WordPress 7.1 function names, so no COEP/COOP headers are sent where DIP applies.
+* Deferred initialization to `plugins_loaded` so plugin activation order no longer matters.
+* The `csme_enabled` setting default no longer depends on the browser saving the settings.
+* Scoped the `__coepCoopIsolation` flag to block editor screens instead of every admin page.
+* Added an uninstall handler that removes the plugin option on deletion.
 
 = 0.2.0 =
 * Added optional HEIC/HEIF upload support with client-side conversion to JPEG.
