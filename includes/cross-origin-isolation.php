@@ -44,6 +44,21 @@ function csme_should_use_coep_coop() {
 }
 
 /**
+ * Returns the COEP mode to use for cross-origin isolation.
+ *
+ * Safari does not support `credentialless`, so it gets `require-corp`.
+ * All other browsers get `credentialless`, which does not require
+ * cross-origin resources to opt in via CORS.
+ *
+ * @return string Either 'require-corp' or 'credentialless'.
+ */
+function csme_get_coep_mode() {
+	global $is_safari;
+
+	return $is_safari ? 'require-corp' : 'credentialless';
+}
+
+/**
  * Sets up cross-origin isolation via COEP/COOP on relevant admin screens.
  *
  * Hooked at priority 20 so it runs after Gutenberg/core's own hooks.
@@ -92,11 +107,9 @@ add_action( 'load-widgets.php', 'csme_set_up_cross_origin_isolation', 20 );
  * @link https://web.dev/coop-coep/
  */
 function csme_start_coep_coop_output_buffer() {
-	global $is_safari;
-
 	ob_start(
-		function ( $output ) use ( $is_safari ) {
-			$coep = $is_safari ? 'require-corp' : 'credentialless';
+		function ( $output ) {
+			$coep = csme_get_coep_mode();
 			header( 'Cross-Origin-Opener-Policy: same-origin' );
 			header( 'Cross-Origin-Embedder-Policy: ' . $coep );
 
@@ -133,8 +146,13 @@ function csme_enqueue_scripts( $hook_suffix ) {
 		true
 	);
 
-	// Flag so the script knows COEP/COOP isolation (not DIP) is active.
-	wp_add_inline_script( 'csme-cross-origin-isolation-coep', 'window.__coepCoopIsolation = true;', 'before' );
+	// Flag so the script knows COEP/COOP isolation (not DIP) is active,
+	// and which COEP mode is in effect (require-corp vs credentialless).
+	wp_add_inline_script(
+		'csme-cross-origin-isolation-coep',
+		'window.__coepCoopIsolation = true; window.__coepMode = ' . wp_json_encode( csme_get_coep_mode() ) . ';',
+		'before'
+	);
 }
 
 add_action( 'admin_enqueue_scripts', 'csme_enqueue_scripts' );

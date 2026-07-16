@@ -40,6 +40,41 @@ class Test_Enqueue_Scripts extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Inline script exposes the COEP/COOP isolation flag and the COEP mode.
+	 */
+	public function test_inline_script_exposes_coep_mode() {
+		global $is_safari;
+		$is_safari = false;
+
+		add_filter( 'csme_use_coep_coop', '__return_true' );
+
+		csme_enqueue_scripts( 'post.php' );
+
+		$before = wp_scripts()->get_data( 'csme-cross-origin-isolation-coep', 'before' );
+		$inline = implode( "\n", (array) $before );
+
+		$this->assertStringContainsString( 'window.__coepCoopIsolation = true;', $inline );
+		$this->assertStringContainsString( 'window.__coepMode = "credentialless";', $inline );
+	}
+
+	/**
+	 * Inline script exposes require-corp as the COEP mode on Safari.
+	 */
+	public function test_inline_script_exposes_require_corp_mode_on_safari() {
+		global $is_safari;
+		$is_safari = true;
+
+		add_filter( 'csme_use_coep_coop', '__return_true' );
+
+		csme_enqueue_scripts( 'post.php' );
+
+		$before = wp_scripts()->get_data( 'csme-cross-origin-isolation-coep', 'before' );
+		$inline = implode( "\n", (array) $before );
+
+		$this->assertStringContainsString( 'window.__coepMode = "require-corp";', $inline );
+	}
+
+	/**
 	 * Script is enqueued on post.php.
 	 */
 	public function test_script_enqueued_on_post_php() {
