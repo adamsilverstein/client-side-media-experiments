@@ -1,0 +1,9 @@
+{
+	"core": "WordPress/WordPress#master",
+	"plugins": [
+		"."
+	],
+	"mappings": {
+		"wp-content/mu-plugins": "./tests/e2e/mu-plugins"
+	}
+}
