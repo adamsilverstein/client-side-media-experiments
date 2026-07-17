@@ -52,8 +52,9 @@
 	var settings = window.csmeMediaLibrarySettings || {};
 	var uploadStore = wp.uploadMedia.store;
 
-	// Map from a file identity key to the placeholder Attachment model, used
-	// to reflect pipeline progress back onto the grid tile.
+	// Map from a file identity key to the placeholder Attachment models
+	// (an array: concurrent uploads of an identical file share a key), used
+	// to reflect pipeline progress back onto the grid tiles.
 	var progressModels = new Map();
 
 	/**
@@ -62,6 +63,8 @@
 	 * The queue item's `sourceFile` is a clone of the original file, so it
 	 * cannot be matched by reference. The clone preserves name, size, and
 	 * last-modified time, which together identify a file within one session.
+	 * Two in-flight uploads of the same file collide on this key, so keys
+	 * map to arrays of models and progress is mirrored to all of them.
 	 *
 	 * @param {File} file The file to key.
 	 * @return {string} Identity key.
@@ -203,8 +206,12 @@
 	 * @param {Object} model The Attachment model to stop tracking.
 	 */
 	function stopTrackingProgress( model ) {
-		progressModels.forEach( function ( tracked, key ) {
-			if ( tracked === model ) {
+		progressModels.forEach( function ( models, key ) {
+			var index = models.indexOf( model );
+			if ( index !== -1 ) {
+				models.splice( index, 1 );
+			}
+			if ( models.length === 0 ) {
 				progressModels.delete( key );
 			}
 		} );
@@ -350,7 +357,13 @@
 			wpUploader.added( model );
 
 			var nativeFile = file.getNative();
-			progressModels.set( fileKey( nativeFile ), model );
+			var key = fileKey( nativeFile );
+			var models = progressModels.get( key );
+			if ( models ) {
+				models.push( model );
+			} else {
+				progressModels.set( key, [ model ] );
+			}
 
 			// Remove the file from plupload so it is not uploaded twice.
 			up.removeFile( file );
@@ -405,14 +418,15 @@
 				return;
 			}
 
-			var model = progressModels.get( fileKey( item.sourceFile ) );
-			if ( ! model ) {
+			var models = progressModels.get( fileKey( item.sourceFile ) );
+			if ( ! models ) {
 				return;
 			}
 
 			if ( typeof item.progress === 'number' ) {
-				model.set( {
-					percent: Math.min( 99, Math.round( item.progress ) ),
+				var percent = Math.min( 99, Math.round( item.progress ) );
+				models.forEach( function ( model ) {
+					model.set( { percent: percent } );
 				} );
 			}
 		} );
