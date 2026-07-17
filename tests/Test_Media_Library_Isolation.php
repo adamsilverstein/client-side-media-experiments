@@ -13,6 +13,7 @@ class Test_Media_Library_Isolation extends WP_UnitTestCase {
 	public function tear_down() {
 		remove_all_filters( 'csme_use_coep_coop' );
 		unset( $_GET['mode'] );
+		unset( $_SERVER['HTTP_USER_AGENT'] );
 		wp_set_current_user( 0 );
 		parent::tear_down();
 	}
@@ -151,14 +152,22 @@ class Test_Media_Library_Isolation extends WP_UnitTestCase {
 		// Force the DIP path: COEP/COOP disabled and a modern Chromium version.
 		add_filter( 'csme_use_coep_coop', '__return_false' );
 
-		if ( ! function_exists( 'wp_get_chromium_major_version' ) ) {
-			function wp_get_chromium_major_version() {
-				return 140;
-			}
-		}
+		/*
+		 * Core's real wp_start_cross_origin_isolation_output_buffer() (WP 7.1+)
+		 * reads the User-Agent and only starts the buffer for Chromium 137+,
+		 * so provide one rather than stubbing the version check.
+		 */
+		$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
+
 		if ( ! function_exists( 'wp_start_cross_origin_isolation_output_buffer' ) ) {
+			// Environments predating WP 7.1: stub the buffer function the
+			// plugin dispatches to, honoring the same Chromium check.
 			function wp_start_cross_origin_isolation_output_buffer() {
-				ob_start();
+				if ( isset( $_SERVER['HTTP_USER_AGENT'] )
+					&& preg_match( '#Chrome/(\d+)#', $_SERVER['HTTP_USER_AGENT'], $matches )
+					&& (int) $matches[1] >= 137 ) {
+					ob_start();
+				}
 			}
 		}
 
