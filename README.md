@@ -23,7 +23,7 @@ WordPress core's client-side media pipeline only runs in the block editor; the c
 
 - Restores cross-origin isolation on the grid screen (`upload.php`), which core does not isolate. On Firefox, Safari, and Chrome < 137 this uses the COEP/COOP headers above; on Chrome 137+ the plugin sends the `Document-Isolation-Policy` header there itself, since core only sends it in the block editor.
 - Intercepts the grid uploader and routes files through the same client-side pipeline the block editor uses: the original image is uploaded via the REST API and thumbnails are generated in the browser, then sideloaded and finalized. HEIC conversion, animated GIF handling, and oversized-file fallbacks are all handled by core's pipeline.
-- Falls back cleanly to the classic server-side upload when the browser does not support client-side processing, so uploads always work.
+- Falls back cleanly to the classic server-side upload when the browser does not support client-side processing.
 
 **Limitations:** only the Media Library **grid** mode is covered. List mode and the separate **Add New Media File** screen (`media-new.php`) continue to upload server-side.
 

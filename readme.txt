@@ -46,7 +46,7 @@ Check that your site is served over HTTPS (or localhost). Client-side media proc
 
 = Do I need this plugin on Chrome? =
 
-No. Chrome 137+ uses Document-Isolation-Policy, which is handled by WordPress core / Gutenberg. This plugin only activates on browsers that do not support DIP.
+Not in the block editor. Chrome 137+ uses Document-Isolation-Policy for the block editor, which is handled by WordPress core / Gutenberg. However, the Media Library grid (Media > Library) still requires this plugin on Chrome 137+ to initiate Document-Isolation-Policy handling on upload.php, which core does not do. Outside the Media Library grid, this plugin only activates on browsers that do not support DIP.
 
 = Will this break my site? =
 

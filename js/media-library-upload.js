@@ -127,7 +127,7 @@
 					args.onError(
 						error instanceof Error
 							? error
-							: new Error( String( error ) )
+							: new Error( error && error.message ? error.message : String( error ) )
 					);
 				}
 			} );
