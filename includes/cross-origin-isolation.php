@@ -222,17 +222,21 @@ function csme_enqueue_scripts( $hook_suffix ) {
 		return;
 	}
 
-	$is_media_library = 'upload.php' === $hook_suffix;
+	$is_media_screen = in_array( $hook_suffix, array( 'upload.php', 'media-new.php' ), true );
 
-	if ( $is_media_library ) {
-		// Only the grid mode has an uploader; list mode is untouched.
+	if ( 'upload.php' === $hook_suffix ) {
+		// Only the grid mode has an uploader; list mode uploads happen on
+		// media-new.php (the list view's "Add New Media File" links there).
 		if ( 'grid' !== csme_get_media_library_mode() ) {
 			return;
 		}
+	}
 
-		// No isolation headers are sent on the grid without the
-		// upload-media package (see csme_set_up_media_library_isolation()),
-		// so the observer script would be dead weight.
+	if ( $is_media_screen ) {
+		// No isolation headers are sent on these screens without the
+		// upload-media package (see csme_set_up_media_library_isolation()
+		// and csme_set_up_media_new_isolation()), so the observer script
+		// would be dead weight.
 		if ( ! wp_script_is( 'wp-upload-media', 'registered' ) ) {
 			return;
 		}
@@ -242,10 +246,10 @@ function csme_enqueue_scripts( $hook_suffix ) {
 
 	/*
 	 * The MutationObserver portion of the script is dependency-free and
-	 * its block editor section self-guards, so the Media Library does
+	 * its block editor section self-guards, so the media screens do
 	 * not need the block editor scripts dragged onto the page.
 	 */
-	$dependencies = $is_media_library
+	$dependencies = $is_media_screen
 		? array()
 		: array( 'wp-block-editor', 'wp-element', 'wp-hooks', 'wp-compose' );
 
